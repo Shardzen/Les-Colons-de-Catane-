@@ -20,5 +20,6 @@
   "homepage": "https://github.com/Shardzen/Les-Colons-de-Catane-#readme",
   "dependencies": {
     "typescript": "^5.9.3"
-  }
+  },
+  "devDependencies": {}
 }
