@@ -1,0 +1,24 @@
+{
+  "name": "les-colons-de-catane-",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shardzen/Les-Colons-de-Catane-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Shardzen/Les-Colons-de-Catane-/issues"
+  },
+  "homepage": "https://github.com/Shardzen/Les-Colons-de-Catane-#readme",
+  "dependencies": {
+    "typescript": "^5.9.3"
+  }
+}
