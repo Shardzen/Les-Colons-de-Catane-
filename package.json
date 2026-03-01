@@ -16,6 +16,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+<<<<<<< HEAD
+=======
+  \"type\": \"module\",
+>>>>>>> logic
   "bugs": {
     "url": "https://github.com/Shardzen/Les-Colons-de-Catane-/issues"
   },
