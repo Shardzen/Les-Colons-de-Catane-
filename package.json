@@ -22,7 +22,7 @@
   "homepage": "https://github.com/Shardzen/Les-Colons-de-Catane-#readme",
   "dependencies": {
     "@prisma/client": "^6.2.1",
-    "discord.js": "^13.17.1"
+    "discord.js": "^14.25.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
