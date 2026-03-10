@@ -5,7 +5,7 @@ import 'dotenv/config'
                 
 
 //async function attendre réponse du net
-const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
+const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN!);
 
 type DeployCommandsProps = {
   guildId: string;
@@ -16,7 +16,7 @@ export async function deployCommands({ guildId }: DeployCommandsProps) {
     console.log("Started refreshing application (/) commands.");
 
     await rest.put(
-      Routes.applicationGuildCommands(config.DISCORD_CLIENT_ID, guildId),
+      Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID!, guildId),
       {
         body: commandsData,
       }
@@ -27,29 +27,30 @@ export async function deployCommands({ guildId }: DeployCommandsProps) {
     console.error(error);
   }
 }
-
-const commandsData = [join, start, build].map(cmd => cmd.data.toJSON());
-
 const JoinCommand = new SlashCommandBuilder()
                 .setName('join')
-                .setDescription('Joins an existing game'),
+                .setDescription('Joins an existing game')
 
 const StartCommand = new SlashCommandBuilder()
                 .setName('start')
-                .setDescription('Start new game'),
+                .setDescription('Start new game')
 
 const BuildCommand = new SlashCommandBuilder()
-                .setName('build')
-                .setDescription('Build something')
-                .addStringOption(opt=>opt.setName('type'))
-                .setDescription('What do you want to build ?')
-                .setRequired(true)
-                .addChoices(
-                 { name: 'CITY', value: 'CITY' 
-                 },
-                { name: 'ROAD', value: 'ROAD' },
-                { name: 'SETTLEMENT', value: 'SETTLEMENT' }
-                  )
-                .addStringOption(opt=>opt.setName('coords'))
-                .setDescription()
-                .setRequired(true)
+  .setName('build')
+  .setDescription('Build something')
+  .addStringOption(opt =>
+    opt.setName('type')
+      .setDescription('What do you want to build ?')
+      .setRequired(true)
+      .addChoices(
+        { name: 'CITY', value: 'CITY' },
+        { name: 'ROAD', value: 'ROAD' },
+        { name: 'SETTLEMENT', value: 'SETTLEMENT' }
+      )
+  )
+      .addStringOption(opt =>opt.setName('coords')
+      .setDescription('Coordinates')
+      .setRequired(true)
+          );
+
+const commandsData = [JoinCommand, StartCommand, BuildCommand].map(cmd => cmd.toJSON());

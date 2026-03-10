@@ -1,3 +1,4 @@
+
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
 import { GameManager } from '../../core/gameManager.js';
 import { Player } from '../../core/types.js';
@@ -12,10 +13,12 @@ export const joinCommand = {
     const player: Player = {
         id: user.id,
         username: user.username,
+        color: 'BLUE',     
         resources: {
-            'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0, 'DESERT': 0
+            'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0
         },
-        devCards: {},
+        devCards: {knights: 0, victoryPoints: 0, special: []},
+        stock: { roads: 0, settlements: 0, cities: 0 }, 
         victoryPoints: 0
     };
 
