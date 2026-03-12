@@ -4,8 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "type": "module",
-  "scripts": {
-    "dev": "nodemon --exec ts-node src/index.ts",
+    "scripts": {
+    "dev": "nodemon --exec tsx src/index.ts",
     "start": "node dist/index.js",
     "build": "tsc"
   },
@@ -16,17 +16,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-<<<<<<< HEAD
-=======
-  \"type\": \"module\",
->>>>>>> logic
   "bugs": {
     "url": "https://github.com/Shardzen/Les-Colons-de-Catane-/issues"
   },
   "homepage": "https://github.com/Shardzen/Les-Colons-de-Catane-#readme",
   "dependencies": {
     "@prisma/client": "^6.2.1",
-    "discord.js": "^13.17.1"
+    "discord.js": "^14.25.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
@@ -34,6 +30,7 @@
     "nodemon": "^3.1.9",
     "prisma": "^7.4.1",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.8.2"
   }
 }
