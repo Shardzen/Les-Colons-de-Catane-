@@ -1,34 +1,80 @@
-/**
- * INDEX.TS - ENGINE SANDBOX
- * Ce fichier sert uniquement à tester la logique pure du jeu
- * avant de l\\'intégrer dans Discord.
- */
+import { Client, GatewayIntentBits, Collection, REST, Routes } from "discord.js";
+import { GameManager } from "./core/gameManager.js";
+import { joinCommand } from "./discord/commands/join.js";
+import { rulesCommand } from "./discord/commands/rules.js";
+import { startCommand } from "./discord/commands/start.js";
+//import { playCommand } from "./discord/commands/play.js";//
 
-import { GameManager } from \"./core/gameManager.js\";
+import "dotenv/config"
 
-console.log(\"--- Démarrage du Core Engine Sandbox ---\");
+const TOKEN = process.env.DISCORD_TOKEN!;
+const CLIENT_ID = process.env.CLIENT_ID!;
+
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds]
+});
+
+const gameManagers = new Map<string, GameManager>();
+
+const commands = [joinCommand, rulesCommand, startCommand];
+
+// Enregistrement des commandes slash
+const rest = new REST().setToken(TOKEN);
+await rest.put(Routes.applicationCommands(CLIENT_ID), {
+  body: commands.map(cmd => cmd.data.toJSON())
+});
+
+client.once("ready", () => {
+  console.log(`âœ… Bot connectÃ© en tant que ${client.user?.tag}`);
+});
+
+client.on("interactionCreate", async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const channelId = interaction.channelId;
+  if (!gameManagers.has(channelId)) {
+    gameManagers.set(channelId, new GameManager([]));
+  }
+
+  const gameManager = gameManagers.get(channelId)!;
+
+  const command = commands.find(cmd => cmd.data.name === interaction.commandName);
+  if (!command) return;
+
+  try {
+    await command.execute(interaction, gameManager);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: "Une erreur est survenue.", ephemeral: true });
+  }
+});
+
+
+/* console.log("--- Dï¿½marrage du Core Engine Sandbox ---");
 
 const testPlayers = [
-  { id: \"123\", username: \"Joueur 1\", color: \"RED\" as const },
-  { id: \"456\", username: \"Joueur 2\", color: \"BLUE\" as const }
+  { id: "123", username: "Joueur 1", color: "RED" as const },
+  { id: "456", username: "Joueur 2", color: "BLUE" as const }
 ];
 
 const engine = new GameManager(testPlayers);
 const state = engine.getState();
 
-console.log(`Partie initialisée ID: ${state.gameId}`);
-console.log(`Nombre de tuiles générées: ${state.board.tiles.length}`);
+console.log(`Partie initialisï¿½e ID: ${state.gameId}`);
+console.log(`Nombre de tuiles gï¿½nï¿½rï¿½es: ${state.board.tiles.length}`);
 console.log(`Phase actuelle: ${state.phase}`);
 
-// Simuler un lancer de dés
-console.log(\"\\nSimuler un lancer de dés...\");
-const response = engine.execute({ type: \"ROLL_DICE\", playerId: \"123\" });
+// Simuler un lancer de dï¿½s
+console.log("\\nSimuler un lancer de dï¿½s...");
+const response = engine.execute({ type: "ROLL_DICE", playerId: "123" });
 
 if (response.success) {
-  console.log(`Résultat: ${response.state.dice}`);
+  console.log(`Rï¿½sultat: ${response.state.dice}`);
   console.log(`Nouvelle phase: ${response.state.phase}`);
 } else {
   console.error(`Erreur: ${response.error?.details}`);
 }
 
-console.log(\"\\n--- Moteur prêt pour intégration ---\");
+console.log("\\n--- Moteur prï¿½t pour intï¿½gration ---");
+*/
+client.login(TOKEN);

@@ -4,23 +4,23 @@
  * Architecture : Clean Architecture / Domain Logic
  */
 
-// --- 1. SYSTÈME DE RESSOURCES ---
+// --- 1. SYSTï¿½ME DE RESSOURCES ---
 
-export type ResourceType = \"WOOD\" | \"BRICK\" | \"SHEEP\" | \"WHEAT\" | \"ORE\";
+export type ResourceType = "WOOD" | "BRICK" | "SHEEP" | "WHEAT" | "ORE";
 
 /**
- * Représente la main d\\'un joueur ou un coût de construction.
- * Utilisation d\\'un Record pour faciliter l\\'accès : hand[\"WOOD\"]
+ * Reprï¿½sente la main d\\'un joueur ou un coï¿½t de construction.
+ * Utilisation d\\'un Record pour faciliter l\\'accï¿½s : hand[\"WOOD\"]
  */
 export type ResourceMap = Record<ResourceType, number>;
 
-// --- 2. GÉOGRAPHIE DU PLATEAU ---
+// --- 2. Gï¿½OGRAPHIE DU PLATEAU ---
 
-export type TerrainType = ResourceType | \"DESERT\";
+export type TerrainType = ResourceType | "DESERT";
 
 /**
- * Coordonnées Axiales (q, r) pour les hexagones.
- * C\\'est le système le plus robuste pour les calculs de distance et de voisinage.
+ * Coordonnï¿½es Axiales (q, r) pour les hexagones.
+ * C\\'est le systï¿½me le plus robuste pour les calculs de distance et de voisinage.
  */
 export interface HexCoord {
   q: number;
@@ -28,7 +28,7 @@ export interface HexCoord {
 }
 
 /**
- * Jeton numérique (2 à 12). Le 7 est exclu de la production (Voleur).
+ * Jeton numï¿½rique (2 ï¿½ 12). Le 7 est exclu de la production (Voleur).
  */
 export type ProductionNumber = 2 | 3 | 4 | 5 | 6 | 8 | 9 | 10 | 11 | 12;
 
@@ -36,14 +36,14 @@ export interface Tile {
   id: string;
   coord: HexCoord;
   terrain: TerrainType;
-  numberToken?: ProductionNumber; // Le désert n\\'a pas de numéro
+  numberToken?: ProductionNumber; // Le dï¿½sert n\\'a pas de numï¿½ro
 }
 
 // --- 3. CONSTRUCTIONS & EMPLACEMENTS ---
 
-export type PlayerColor = \"RED\" | \"BLUE\" | \"WHITE\" | \"ORANGE\";
+export type PlayerColor = "RED" | "BLUE" | "WHITE" | "ORANGE";
 
-export type ConstructionType = \"ROAD\" | \"SETTLEMENT\" | \"CITY\";
+export type ConstructionType = "ROAD" | "SETTLEMENT" | "CITY";
 
 // --- 4. JOUEUR ---
 
@@ -53,13 +53,13 @@ export interface Player {
   color: PlayerColor;
   resources: ResourceMap;
   victoryPoints: number;
-  // Stock restant pour respecter les règles de Catane (ex: 15 routes max)
+  // Stock restant pour respecter les rï¿½gles de Catane (ex: 15 routes max)
   stock: {
     roads: number;
     settlements: number;
     cities: number;
   };
-  // Cartes de développement possédées (simplifiées pour l\\'interface de base)
+  // Cartes de dï¿½veloppement possï¿½dï¿½es (simplifiï¿½es pour l\\'interface de base)
   devCards: {
     knights: number;
     victoryPoints: number;
@@ -67,15 +67,15 @@ export interface Player {
   };
 }
 
-// --- 5. ÉTAT GLOBAL DU JEU (SINGLE SOURCE OF TRUTH) ---
+// --- 5. ï¿½TAT GLOBAL DU JEU (SINGLE SOURCE OF TRUTH) ---
 
 export type GamePhase = 
-  | \"SETUP_1\"      // Placement initial 1
-  | \"SETUP_2\"      // Placement initial 2 (ordre inverse)
-  | \"ROLLING\"      // En attente du jet de dés
-  | \"TRADING\"      // Phase d\\'échange et de construction
-  | \"ROBBER_MOVE\"  // Le joueur doit déplacer le voleur (après un 7)
-  | \"DISCARDING\";  // Les joueurs perdent la moitié de leurs ressources (>7)
+  | "SETUP_1"      // Placement initial 1
+  | "SETUP_2"      // Placement initial 2 (ordre inverse)
+  | "ROLLING"      // En attente du jet de dï¿½s
+  | "TRADING"      // Phase d\\'ï¿½change et de construction
+  | "ROBBER_MOVE"  // Le joueur doit dï¿½placer le voleur (aprï¿½s un 7)
+  | "DISCARDING";  // Les joueurs perdent la moitiï¿½ de leurs ressources (>7)
 
 export interface GameState {
   gameId: string;
@@ -83,10 +83,11 @@ export interface GameState {
   currentPlayerIndex: number;
   players: Player[];
   board: {
+    hexes(hexes: any): unknown;
     tiles: Tile[];
     robberPosition: HexCoord;
     // Les maps de constructions permettent une recherche rapide O(1)
-    // Clé formatée : \"q,r,direction\"
+    // Clï¿½ formatï¿½e : \"q,r,direction\"
     settlements: Map<string, { playerId: string; isCity: boolean }>;
     roads: Map<string, { playerId: string }>;
   };
@@ -94,11 +95,11 @@ export interface GameState {
   winnerId: string | null;
 }
 
-// --- 6. RÉPONSES D\\'ACTION ---
+// --- 6. Rï¿½PONSES D\\'ACTION ---
 
 /**
- * Format standardisé pour toute interaction avec le moteur.
- * Agnostique : peut être renvoyé via un WebSocket, une API ou une console.
+ * Format standardisï¿½ pour toute interaction avec le moteur.
+ * Agnostique : peut ï¿½tre renvoyï¿½ via un WebSocket, une API ou une console.
  */
 export interface ActionResponse {
   success: boolean;
@@ -107,13 +108,21 @@ export interface ActionResponse {
     code: string;
     details: string;
   };
-  state: GameState; // On renvoie toujours le nouvel état après une action
+  state: GameState; // On renvoie toujours le nouvel ï¿½tat aprï¿½s une action
+}
+
+
+export class HexCoord {
+  constructor(
+    public q: number,
+    public r: number
+  ) {}
 }
 
 /**
  * Exemples de types d\\'actions (Input)
  */
 export type GameAction = 
-  | { type: \"ROLL_DICE\"; playerId: string }
-  | { type: \"BUILD\"; playerId: string; buildType: ConstructionType; location: any }
-  | { type: \"TRADE\"; playerId: string; offer: ResourceMap; demand: ResourceMap };
+  | { type: "ROLL_DICE"; playerId: string }
+  | { type: "BUILD"; playerId: string; buildType: ConstructionType; location: any }
+  | { type: "TRADE"; playerId: string; offer: ResourceMap; demand: ResourceMap };
