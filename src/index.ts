@@ -3,7 +3,7 @@ import { GameManager } from "./core/gameManager.js";
 import { joinCommand } from "./discord/commands/join.js";
 import { rulesCommand } from "./discord/commands/rules.js";
 import { startCommand } from "./discord/commands/start.js";
-import { playCommand } from "./discord/commands/play.js";
+//import { playCommand } from "./discord/commands/play.js";//
 
 import "dotenv/config"
 
@@ -16,7 +16,7 @@ const client = new Client({
 
 const gameManagers = new Map<string, GameManager>();
 
-const commands = [joinCommand, rulesCommand, startCommand, playCommand];
+const commands = [joinCommand, rulesCommand, startCommand];
 
 // Enregistrement des commandes slash
 const rest = new REST().setToken(TOKEN);
