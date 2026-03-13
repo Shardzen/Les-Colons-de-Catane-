@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id
+  username  String
+  games     Game[]   @relation("PlayerGames")
+  wonGames  Game[]   @relation("Winner")
+  stats     Stats?
+}
+
+model Game {
+  id        Int      @id @default(autoincrement())
+  status    String   // PENDING, ONGOING, FINISHED
+  players   User[]   @relation("PlayerGames")
+  winnerId  String?
+  winner    User?    @relation("Winner", fields: [winnerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  boardData String   // JSON representation of the board state
+}
+
+model Stats {
+  id        Int    @id @default(autoincrement())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id])
+  wins      Int    @default(0)
+  totalGames Int    @default(0)
+}
