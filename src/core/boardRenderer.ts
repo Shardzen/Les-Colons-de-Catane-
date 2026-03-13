@@ -1,7 +1,7 @@
 import { GameState, Tile, TerrainType, PlayerColor } from "./types.js";
 import { EmbedBuilder } from "discord.js";
 
-// --- Affiche les EMOJIS surt le plateau ---
+// --- Affiche les EMOJIS surt le plateau ---   
 
 const TERRAIN_EMOJI: Record<TerrainType, string> = {
   WOOD:   "🌲",

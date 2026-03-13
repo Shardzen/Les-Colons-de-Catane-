@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Game {
+  id            String   @id @default(uuid())
+  guildId       String
+  status        String   @default("LOBBY")
+  currentTurn   Int      @default(0)
+  createdAt     DateTime @default(now())
+  
+  players       Player[]
+  hexes         Hex[]
+  constructions Construction[]
+}
+
+model Player {
+  id             String @id @default(uuid())
+  gameId         String
+  userId         String
+  username       String
+  color          String
+  
+  wood           Int @default(0)
+  brick          Int @default(0)
+  wool           Int @default(0)
+  grain          Int @default(0)
+  ore            Int @default(0)
+  victoryPoints  Int @default(0)
+
+  game           Game   @relation(fields: [gameId], references: [id])
+  constructions  Construction[]
+}
+
+model Hex {
+  id           String @id @default(uuid())
+  gameId       String
+  q            Int
+  r            Int
+  resourceType String
+  value        Int
+  hasRobber    Boolean @default(false)
+
+  game         Game @relation(fields: [gameId], references: [id])
+}
+
+model Construction {
+  id        String @id @default(uuid())
+  gameId    String
+  playerId  String
+  type      String
+  
+  q         Int
+  r         Int
+  corner    Int? 
+  edge      Int?
+
+  game      Game   @relation(fields: [gameId], references: [id])
+  player    Player @relation(fields: [playerId], references: [id])
+}

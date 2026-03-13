@@ -21,16 +21,17 @@
   },
   "homepage": "https://github.com/Shardzen/Les-Colons-de-Catane-#readme",
   "dependencies": {
-    "@prisma/client": "^6.2.1",
+    "@napi-rs/canvas": "^0.1.96",
+    "@prisma/client": "6.4.1",
     "discord.js": "^14.25.1"
   },
   "devDependencies": {
-    "@types/node": "^22.13.10",
+    "@types/node": "^22.19.15",
     "dotenv": "^17.3.1",
     "nodemon": "^3.1.9",
-    "prisma": "^7.4.1",
+    "prisma": "6.4.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.3"
   }
 }
