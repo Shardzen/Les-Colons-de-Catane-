@@ -13,7 +13,7 @@ export const joinCommand = {
     const player: Player = {
         id: user.id,
         username: user.username,
-        color: {'BLUE': 0, 'RED': 0,},     
+        color: {'BLUE': 0, 'RED': 0, },     
         resources: {
             'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0
         },
