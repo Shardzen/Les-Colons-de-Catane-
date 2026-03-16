@@ -1,210 +1,152 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, StringSelectMenuBuilder } from "discord.js";
+﻿import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, StringSelectMenuBuilder, TextChannel, Message, EmbedBuilder } from "discord.js";
 import { config } from "dotenv";
 import { CatanEngine } from "./CatanEngine.js";
 import { MapRenderer } from "./MapRenderer.js";
-import { GameState } from "./types.js";
+import { GameState, ResourceType } from "./types.js";
 
 config();
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+let currentGame: CatanEngine | null = null, lobbyPlayers: any[] = [], pendingActions = new Map<string, any>();
+const CHANNELS = { PLATEAU: process.env.CHANNEL_PLATEAU, JOURNAL: process.env.CHANNEL_JOURNAL, COMMERCE: process.env.CHANNEL_COMMERCE, LOGS: process.env.CHANNEL_LOGS };
+let boardMessage: Message | null = null;
 
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
-});
-
-let currentGame: CatanEngine | null = null;
-const pendingActions = new Map<string, any>();
-
-function getLabel(index: number) {
-    let label = "";
-    while (index >= 0) {
-        label = String.fromCharCode(65 + (index % 26)) + label;
-        index = Math.floor(index / 26) - 1;
-    }
-    return label;
-}
+function getLabel(i: number) { let l = ""; while (i >= 0) { l = String.fromCharCode(65 + (i % 26)) + l; i = Math.floor(i / 26) - 1; } return l; }
+async function clearChannel(id: string | undefined) { if (!id) return; const c = client.channels.cache.get(id) as TextChannel; if (c) { try { const f = await c.messages.fetch({ limit: 100 }); await c.bulkDelete(f); } catch (e) {} } }
 
 const commands = [
-  new SlashCommandBuilder()
-    .setName("start")
-    .setDescription("Démarrer une nouvelle partie de Catane")
-    .addUserOption(option => option.setName("joueur2").setDescription("Le 2ème joueur").setRequired(true))
-    .addUserOption(option => option.setName("joueur3").setDescription("Le 3ème joueur"))
-    .addUserOption(option => option.setName("joueur4").setDescription("Le 4ème joueur")),
-  new SlashCommandBuilder()
-    .setName("map")
-    .setDescription("Afficher le plateau de jeu"),
+  new SlashCommandBuilder().setName("start").setDescription("Ouvrir un lobby"),
+  new SlashCommandBuilder().setName("join").setDescription("Rejoindre le lobby"),
+  new SlashCommandBuilder().setName("begin").setDescription("Lancer la partie"),
+  new SlashCommandBuilder().setName("rules").setDescription("Afficher les règles détaillées"),
+  new SlashCommandBuilder().setName("inventory").setDescription("Voir tes ressources"),
+  new SlashCommandBuilder().setName("map").setDescription("Afficher le plateau"),
+  new SlashCommandBuilder().setName("finish").setDescription("Terminer la session"),
 ];
 
-async function updateBoard(interaction: any, message: string = "") {
+async function updateBoard(interaction?: any, logMsg: string = "") {
     if (!currentGame) return;
-    const buffer = await MapRenderer.renderMapToBuffer(currentGame);
-    const attachment = new AttachmentBuilder(buffer, { name: 'catan-board.png' });
-    
-    const p = currentGame.currentPlayer;
-    
-    const row = new ActionRowBuilder<ButtonBuilder>();
-    
-    if (currentGame.state === GameState.PLAYING) {
-        row.addComponents(
-            new ButtonBuilder().setCustomId('roll_dice').setLabel('🎲 Lancer les dés').setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setCustomId('build_settlement').setLabel('🏠 Construire Colonie').setStyle(ButtonStyle.Success),
-            new ButtonBuilder().setCustomId('build_road').setLabel('🛣️ Construire Route').setStyle(ButtonStyle.Success),
-            new ButtonBuilder().setCustomId('end_turn').setLabel('⏭️ Fin de tour').setStyle(ButtonStyle.Secondary)
-        );
-    } else {
-        row.addComponents(
-            new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Placer Colonie').setStyle(ButtonStyle.Success),
-            new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Placer Route').setStyle(ButtonStyle.Success),
-        );
-    }
+    try {
+        const buffer = await MapRenderer.renderMapToBuffer(currentGame);
+        const attachment = new AttachmentBuilder(buffer, { name: 'catan.png' });
+        const p = currentGame.currentPlayer;
+        if (CHANNELS.PLATEAU) {
+            const pc = client.channels.cache.get(CHANNELS.PLATEAU) as TextChannel;
+            if (pc) {
+                const content = `🗺️ **Plateau** | Tour de <@${p.id}> | <t:${Math.floor(Date.now()/1000)}:R>`;
+                if (boardMessage) { try { await boardMessage.edit({ content, files: [attachment] }); } catch (e) { boardMessage = await pc.send({ content, files: [attachment] }); } }
+                else boardMessage = await pc.send({ content, files: [attachment] });
+            }
+        }
+        if (logMsg && CHANNELS.JOURNAL) { const c = client.channels.cache.get(CHANNELS.JOURNAL) as TextChannel; if (c) await c.send(`📖 **Journal** : ${logMsg}`); }
 
-    const inventory = `🎒 **Ton inventaire** : 🌲${p.resources["Bois"]} 🧱${p.resources["Argile"]} 🐑${p.resources["Laine"]} 🌾${p.resources["Blé"]} ⛰️${p.resources["Minerai"]} | 🏆 ${p.victoryPoints} PV`;
-    const fullMessage = `🎮 **Tour de <@${p.id}> !** [Phase: ${currentGame.state}]\n${inventory}\n\n${message}`;
+        const row = new ActionRowBuilder<ButtonBuilder>();
+        if (currentGame.state === GameState.PLAYING) {
+            if (!currentGame.hasRolled) row.addComponents(new ButtonBuilder().setCustomId('roll_dice').setLabel('🎲 Lancer les dés').setStyle(ButtonStyle.Primary));
+            else {
+                row.addComponents(
+                    new ButtonBuilder().setCustomId('build_settlement').setLabel('🏠 Colonie').setStyle(ButtonStyle.Success),
+                    new ButtonBuilder().setCustomId('build_road').setLabel('🛣️ Route').setStyle(ButtonStyle.Success),
+                    new ButtonBuilder().setCustomId('build_city').setLabel('🏙️ Ville').setStyle(ButtonStyle.Success),
+                    new ButtonBuilder().setCustomId('trade_bank').setLabel('🤝 Commerce').setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder().setCustomId('end_turn').setLabel('⭐ Fin').setStyle(ButtonStyle.Secondary)
+                );
+            }
+        } else if (currentGame.state !== GameState.FINISHED) {
+            if (currentGame.setupStep === "SETTLEMENT") row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Placer Colonie').setStyle(ButtonStyle.Success));
+            else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Placer Route').setStyle(ButtonStyle.Success));
+        }
 
-    if (interaction.isRepliable() && !interaction.replied) {
-        await interaction.reply({ content: fullMessage, files: [attachment], components: [row] });
-    } else {
-        await interaction.channel?.send({ content: fullMessage, files: [attachment], components: [row] });
-    }
+        const msg = currentGame.state === GameState.FINISHED ? `🏆 Fin !` : `🎮 Tour de <@${p.id}> (${currentGame.state})`;
+        if (interaction && interaction.isRepliable()) {
+            if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [row], files: [] });
+            else await interaction.reply({ content: msg, components: [row] });
+        } else if (CHANNELS.COMMERCE) {
+            const c = client.channels.cache.get(CHANNELS.COMMERCE) as TextChannel;
+            if (c) await c.send({ content: msg, components: [row] });
+        }
+    } catch (e) {}
 }
 
 client.once("ready", async () => {
-  console.log(`🤖 Bot connecté !`);
-  if (process.env.DISCORD_TOKEN && process.env.CLIENT_ID) {
-    const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
-    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
-    console.log("✅ Commandes chargées.");
-  }
+    console.log(`🤖 Bot connecté !`);
+    const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN!);
+    if (process.env.GUILD_ID) await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID!, process.env.GUILD_ID), { body: commands });
 });
 
-client.on("interactionCreate", async (interaction) => {
-  if (interaction.isChatInputCommand()) {
-      if (interaction.commandName === "start") {
-        const u1 = interaction.user;
-        const u2 = interaction.options.getUser("joueur2");
-        const u3 = interaction.options.getUser("joueur3");
-        const u4 = interaction.options.getUser("joueur4");
-
-        const playersData = [
-          { id: u1.id, username: u1.username, color: "#FF0000" },
-          { id: u2!.id, username: u2!.username, color: "#0000FF" }
-        ];
-        if (u3) playersData.push({ id: u3.id, username: u3.username, color: "#00FF00" });
-        if (u4) playersData.push({ id: u4.id, username: u4.username, color: "#FFA500" });
-
-        currentGame = new CatanEngine(playersData);
-        await updateBoard(interaction, "🎲 **La partie commence ! Phase de placement initial.**\nLe joueur 1 doit placer sa première colonie.");
-      }
-      
-      if (interaction.commandName === "map") {
-         await updateBoard(interaction);
-      }
-  }
-
-  if (interaction.isButton()) {
-      if (!currentGame) return;
-      if (interaction.user.id !== currentGame.currentPlayer.id) {
-          return interaction.reply({ content: "Ce n'est pas ton tour !", ephemeral: true });
-      }
-
-      const pId = interaction.user.id;
-
-      if (interaction.customId === "roll_dice") {
-          const res = currentGame.rollDice();
-          let msg = `🎲 Dés : **${res.total}**\n`;
-          if (res.isRobber) msg += "😈 Le voleur s'active ! (À implémenter : défausse & déplacement)\n";
-          else {
-              for (const [uname, gains] of Object.entries(res.harvests)) {
-                  msg += `- ${uname} a récolté.\n`;
-              }
-          }
-          await updateBoard(interaction, msg);
-      }
-
-      if (interaction.customId === "setup_settlement" || interaction.customId === "build_settlement") {
-          const nodes = currentGame.getPlaceableNodes(pId);
-          if (nodes.length === 0) return interaction.reply({ content: "Tu ne peux construire aucune colonie !", ephemeral: true });
-          
-          const optionsLimit = Math.min(25, nodes.length);
-          const slicedNodes = nodes.slice(0, optionsLimit);
-          
-          const validSpots = slicedNodes.map((n, i) => ({ id: n.id, label: getLabel(i) }));
-          pendingActions.set(pId, { type: 'settlement', spots: validSpots });
-
-          const buffer = await MapRenderer.renderInteractiveMap(currentGame, validSpots, true);
-          const attachment = new AttachmentBuilder(buffer, { name: 'catan-select.png' });
-
-          const selectMenu = new StringSelectMenuBuilder()
-              .setCustomId('select_spot')
-              .setPlaceholder('Choisis un emplacement (A, B, C...)')
-              .addOptions(validSpots.map(s => ({ label: `Emplacement ${s.label}`, value: s.id })));
-          
-          const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
-
-          await interaction.reply({ content: "📍 **Où veux-tu placer ta colonie ?** Regarde les lettres sur la carte.", files: [attachment], components: [row], ephemeral: true });
-      }
-
-      if (interaction.customId === "setup_road" || interaction.customId === "build_road") {
-          const edges = currentGame.getPlaceableEdges(pId);
-          if (edges.length === 0) return interaction.reply({ content: "Tu ne peux construire aucune route !", ephemeral: true });
-          
-          const optionsLimit = Math.min(25, edges.length);
-          const slicedEdges = edges.slice(0, optionsLimit);
-          
-          const validSpots = slicedEdges.map((e, i) => ({ id: e.id, label: getLabel(i) }));
-          pendingActions.set(pId, { type: 'road', spots: validSpots });
-
-          const buffer = await MapRenderer.renderInteractiveMap(currentGame, validSpots, false);
-          const attachment = new AttachmentBuilder(buffer, { name: 'catan-select.png' });
-
-          const selectMenu = new StringSelectMenuBuilder()
-              .setCustomId('select_spot')
-              .setPlaceholder('Choisis un emplacement (A, B, C...)')
-              .addOptions(validSpots.map(s => ({ label: `Emplacement ${s.label}`, value: s.id })));
-          
-          const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
-
-          await interaction.reply({ content: "📍 **Où veux-tu placer ta route ?** Regarde les lettres sur la carte.", files: [attachment], components: [row], ephemeral: true });
-      }
-
-      if (interaction.customId === "end_turn") {
-          currentGame.nextTurn();
-          await interaction.deferUpdate();
-          await updateBoard(interaction, "Le tour passe au joueur suivant.");
-      }
-  }
-
-  if (interaction.isStringSelectMenu() && interaction.customId === "select_spot") {
-      if (!currentGame) return;
-      const pId = interaction.user.id;
-      const action = pendingActions.get(pId);
-      if (!action) return;
-
-      const selectedId = interaction.values[0];
-
-      if (action.type === 'settlement') {
-          if (currentGame.buildSettlement(pId, selectedId)) {
-              // Note: Normalement il faudrait forcer la construction d'une route tout de suite après en SETUP
-              await interaction.update({ content: "✅ Colonie construite !", components: [], files: [] });
-              await updateBoard(interaction, `<@${pId}> a construit une Colonie ! (Construisez une route maintenant si c'est la phase de setup)`);
-          } else {
-              await interaction.update({ content: "❌ Construction impossible.", components: [], files: [] });
-          }
-      }
-
-      if (action.type === 'road') {
-          if (currentGame.buildRoad(pId, selectedId)) {
-              if (currentGame.state === GameState.SETUP_1 || currentGame.state === GameState.SETUP_2) {
-                  currentGame.nextTurn();
-              }
-              await interaction.update({ content: "✅ Route construite !", components: [], files: [] });
-              await updateBoard(interaction, `<@${pId}> a construit une Route !`);
-          } else {
-              await interaction.update({ content: "❌ Construction impossible.", components: [], files: [] });
-          }
-      }
-      
-      pendingActions.delete(pId);
-  }
+client.on("interactionCreate", async (i) => {
+    try {
+        if (i.isChatInputCommand()) {
+            if (i.commandName === "finish") { await i.reply({ content: "🧼 Nettoyage...", ephemeral: true }); await clearChannel(CHANNELS.PLATEAU); await clearChannel(CHANNELS.JOURNAL); await clearChannel(CHANNELS.COMMERCE); currentGame = null; lobbyPlayers = []; boardMessage = null; return i.followUp({ content: "🏁 Terminé !" }); }
+            if (i.commandName === "start") { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: "#FF0000" }]; await i.reply("🆕 Lobby ouvert ! /join pour rejoindre."); }
+            if (i.commandName === "join") { if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: "Erreur lobby", ephemeral: true }); const c = ["#0000FF", "#00FF00", "#FFA500"]; lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: c[lobbyPlayers.length-1] }); await i.reply(`✅ <@${i.user.id}> a rejoint ! (${lobbyPlayers.length}/4)`); }
+            if (i.commandName === "begin") { if (lobbyPlayers.length < 2) return i.reply("2 joueurs min."); currentGame = new CatanEngine(lobbyPlayers); boardMessage = null; await updateBoard(i, "La partie commence !"); }
+            if (i.commandName === "inventory") { if (!currentGame) return i.reply("Pas de partie."); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply("Pas dedans."); i.reply({ content: `🎒 Bois:${p.resources["Bois"]} Argile:${p.resources["Argile"]} Laine:${p.resources["Laine"]} Blé:${p.resources["Blé"]} Minerai:${p.resources["Minerai"]} | PV:${p.victoryPoints}`, ephemeral: true }); }
+            if (i.commandName === "map") await updateBoard(i);
+            if (i.commandName === "rules") {
+                const embed = new EmbedBuilder()
+                    .setTitle("📜 Manuel des Colons de Catane")
+                    .setDescription("Bienvenue sur l'île de Catane ! Voici tout ce qu'il faut savoir pour devenir le maître de l'île.")
+                    .addFields(
+                        { name: "🎯 But du Jeu", value: "Soyez le premier à atteindre **10 Points de Victoire (PV)**." },
+                        { name: "🏗️ Coûts de Construction", value: "🛣️ **Route** : 🌲1 Bois + 🧱1 Argile\n🏠 **Colonie** : 🌲1 Bois + 🧱1 Argile + 🐑1 Laine + 🌾1 Blé (Vaut **1 PV**)\n🏙️ **Ville** : ⛰️3 Minerais + 🌾2 Blés (Vaut **2 PV**)\n🃏 **Carte Dev** : ⛰️1 Minerai + 🐑1 Laine + 🌾1 Blé" },
+                        { name: "🎲 Déroulement d'un tour", value: "1. **Récolte** : Lancez les dés. Si le total correspond à une case où vous avez un bâtiment, vous gagnez la ressource.\n2. **Commerce** : Échangez vos ressources avec la banque (4:1) ou les ports.\n3. **Construction** : Utilisez vos ressources pour bâtir et gagner des points." },
+                        { name: "😈 Le Voleur (Le 7)", value: "Si vous faites un **7**, personne ne reçoit de ressources. Le joueur actif déplace le Voleur pour bloquer une case et voler une ressource à un adversaire." },
+                        { name: "💡 Astuces", value: "- Les **Villes** rapportent double production (2 ressources au lieu d'une).\n- Respectez la **règle de distance** : il faut toujours 2 intersections vides entre chaque colonie." }
+                    )
+                    .setColor(0xE67E22)
+                    .setFooter({ text: "Utilisez les boutons dans #commerce-public pour jouer !" });
+                await i.reply({ embeds: [embed] });
+            }
+        }
+        if (i.isButton()) {
+            if (!currentGame || i.user.id !== currentGame.currentPlayer.id) return i.reply({ content: "Pas ton tour !", ephemeral: true });
+            if (i.customId === "roll_dice") { const res = currentGame.rollDice(); if (res) { await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fait un **${res.total}**.`); } }
+            if (i.customId === "setup_settlement" || i.customId === "build_settlement") {
+                const spots = currentGame.getPlaceableNodes(i.user.id).map((n, j) => ({ id: n.id, label: getLabel(j) }));
+                pendingActions.set(i.user.id, { type: 'settlement', spots });
+                const b = await MapRenderer.renderInteractiveMap(currentGame, spots.slice(0, 25), true);
+                const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: `Pos ${s.label}`, value: s.id })));
+                await i.reply({ content: "🏠 Où ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+            }
+            if (i.customId === "setup_road" || i.customId === "build_road") {
+                const spots = currentGame.getPlaceableEdges(i.user.id).map((e, j) => ({ id: e.id, label: getLabel(j) }));
+                pendingActions.set(i.user.id, { type: 'road', spots });
+                const b = await MapRenderer.renderInteractiveMap(currentGame, spots.slice(0, 25), false);
+                const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: `Pos ${s.label}`, value: s.id })));
+                await i.reply({ content: "🛣️ Où ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+            }
+            if (i.customId === "build_city") {
+                const spots = currentGame.getUpgradableSettlements(i.user.id).map((n, j) => ({ id: n.id, label: getLabel(j) }));
+                pendingActions.set(i.user.id, { type: 'city', spots });
+                const b = await MapRenderer.renderInteractiveMap(currentGame, spots.slice(0, 25), true);
+                const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: `Pos ${s.label}`, value: s.id })));
+                await i.reply({ content: "🏙️ Améliorer ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+            }
+            if (i.customId === "trade_bank") {
+                const s = new StringSelectMenuBuilder().setCustomId('trade_give').addOptions(Object.values(ResourceType).filter(r => r !== ResourceType.DESERT).map(r => ({ label: r, value: r })));
+                await i.reply({ content: "🤝 Donner 4 ?", components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+            }
+            if (i.customId === "end_turn") { currentGame.nextTurn(); await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
+        }
+        if (i.isStringSelectMenu()) {
+            if (i.customId === "select_spot") {
+                const a = pendingActions.get(i.user.id); if (!a) return;
+                if (a.type === 'settlement' && currentGame!.buildSettlement(i.user.id, i.values[0])) { await i.update({ content: "✅ OK", components: [], files: [] }); await updateBoard(null, `<@${i.user.id}> a posé une Colonie.`); }
+                else if (a.type === 'city' && currentGame!.buildCity(i.user.id, i.values[0])) { await i.update({ content: "✅ OK", components: [], files: [] }); await updateBoard(null, `<@${i.user.id}> a posé une Ville.`); }
+                else if (a.type === 'road' && currentGame!.buildRoad(i.user.id, i.values[0])) { await i.update({ content: "✅ OK", components: [], files: [] }); await updateBoard(null, `<@${i.user.id}> a posé une Route.`); }
+                pendingActions.delete(i.user.id);
+            }
+            if (i.customId === 'trade_give') {
+                const r = i.values[0] as ResourceType;
+                const s = new StringSelectMenuBuilder().setCustomId(`trade_get_${r}`).addOptions(Object.values(ResourceType).filter(r2 => r2 !== ResourceType.DESERT && r2 !== r).map(r2 => ({ label: r2, value: r2 })));
+                await i.update({ content: `Contre quoi ?`, components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)] });
+            }
+            if (i.customId.startsWith('trade_get_')) {
+                const g = i.customId.replace('trade_get_', '') as ResourceType, r = i.values[0] as ResourceType;
+                if (currentGame!.tradeWithBank(i.user.id, g, r)) { await i.update({ content: "✅ OK", components: [] }); await updateBoard(null, `<@${i.user.id}> a fait un échange.`); }
+                else i.update({ content: "❌ Pas assez de ressources", components: [] });
+            }
+        }
+    } catch (e) {}
 });
-
 client.login(process.env.DISCORD_TOKEN);
