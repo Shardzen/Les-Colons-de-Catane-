@@ -1,5 +1,4 @@
-
-import { SlashCommandBuilder, CommandInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+﻿import { SlashCommandBuilder, CommandInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { GameManager } from '../../core/gameManager.js';
 import { renderBoardEmoji } from '../../core/boardRenderer.js';
 
@@ -9,19 +8,18 @@ export const beginCommand = {
     .setDescription('Starts the game from the current lobby'),
   
   async execute(interaction: CommandInteraction, gameManager: GameManager) {
-    const success = gameManager.startGame(interaction.channelId);
-    
-    if (success) {
-        const game = gameManager.getGame(interaction.channelId)!;
-        const boardRender = renderBoardEmoji(game.board.hexes);
-        
+    const game = gameManager.getGame();
+
+    if (game.players.length >= 2) {
+        const boardRender = renderBoardEmoji(game);
+
         const rollButton = new ButtonBuilder()
             .setCustomId('roll_dice')
             .setLabel('Lancer les Dés')
             .setStyle(ButtonStyle.Primary);
-        
+
         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(rollButton);
-        
+
         const embed = new EmbedBuilder()
             .setTitle("Les Colons de Catane - La partie commence !")
             .setDescription(`Le plateau est généré !\n\n${boardRender}\n\nC'est au tour de ${game.players[game.currentPlayerIndex]?.username} de jouer !`)
