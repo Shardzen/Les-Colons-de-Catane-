@@ -1,31 +1,35 @@
-
-import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
+﻿import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
 import { GameManager } from '../../core/gameManager.js';
-import { Player } from '../../core/types.js';
+import { Player, PlayerColor } from '../../core/types.js';
 
 export const joinCommand = {
   data: new SlashCommandBuilder()
     .setName('join')
     .setDescription('Joins an existing game lobby'),
-  
+
   async execute(interaction: CommandInteraction, gameManager: GameManager) {
     const user = interaction.user;
+    
+    const colors: PlayerColor[] = ["RED", "BLUE", "WHITE", "ORANGE"];
+    const currentColorIndex = gameManager.getGame().players.length % colors.length;
+    const assignedColor = colors[currentColorIndex];
+
     const player: Player = {
         id: user.id,
         username: user.username,
-        color: {'BLUE': 0, 'RED': 0,},     
+        color: assignedColor,
         resources: {
             'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0
         },
         devCards: {knights: 0, victoryPoints: 0, special: []},
-        stock: { roads: 0, settlements: 0, cities: 0 }, 
+        stock: { roads: 15, settlements: 5, cities: 4 },
         victoryPoints: 0
     };
 
     const success = gameManager.joinGame(interaction.channelId, player);
-    
-    if (success) {
-        const game = gameManager.getGame(interaction.channelId);  // tu essaies de passer un argument (une valeur entre les parenthèses) à une fonction ou une méthode qui a été définie pour n'en recevoir aucun
+
+    if (success.success) {
+        const game = gameManager.getGame();
         const playerList = game?.players.map(p => p.username).join(', ');
         const embed = new EmbedBuilder()
             .setTitle("Les Colons de Catane - Lobby")
@@ -34,7 +38,7 @@ Joueurs (${game?.players.length}/4) : ${playerList}`)
             .setColor(0x00FF00);
         await interaction.reply({ embeds: [embed] });
     } else {
-        await interaction.reply({ content: "Impossible de rejoindre la partie. Soit elle a déjà commencé, soit elle est complète, soit vous n'avez pas de lobby ouvert dans ce salon.", ephemeral: true });
+        await interaction.reply({ content: `Impossible de rejoindre la partie : ${success.error?.details}`, ephemeral: true });     
     }
   }
 };
