@@ -62,7 +62,6 @@ export function renderBoardEmoji(state: GameState): string {
   return lines.join("\n");
 }
 
-// --- EMBED BUILDER ---
 
 export function buildGameEmbed(state: GameState): EmbedBuilder {
   const currentPlayer = state.players[state.currentPlayerIndex];

@@ -1,9 +1,4 @@
-/**
- * GAMEMANAGER.TS - CORE ENGINE LOGIC
- * Responsabilit� : Orchestrer les r�gles et valider les transitions d\\'�tat.
- */
-
-import { 
+﻿import { 
   GameState, 
   GameAction, 
   GamePhase,
@@ -24,9 +19,7 @@ export class GameManager {
     this.state = this.initializeGame(playerData);
   }
 
-  /**
-   * INITIALISATION : Cr�ation du plateau et des joueurs
-   */
+
   private initializeGame(playerData: { id: string; username: string; color: PlayerColor }[]): GameState {
     const players: Player[] = playerData.map(p => ({
       id: p.id,
@@ -39,7 +32,6 @@ export class GameManager {
     }));
 
 
-    // Calcul du premier �tat
     const initialState: GameState = {
     gameId: Math.random().toString(36).substring(7),
     phase: "SETUP_1" as GamePhase,
@@ -87,7 +79,6 @@ export class GameManager {
 }
   
 
-      //Commande qui va créer une nouvelle partie ou en rejoindre une 
   public createGame(channelId: string, player: Player): ActionResponse {
   if (this.state.players.length > 0) {
     return { success: false, state: this.state, error: { code: "GAME_EXISTS", details: "Une partie existe déjà dans ce salon." } };
@@ -107,10 +98,7 @@ export class GameManager {
   return { success: true, state: this.state, message: `${player.username} a créé une nouvelle partie.` };
 }
   
-  
-  /**
-   * POINT D\\'ENTR�E UNIQUE : Toute action passe par ici
-   */
+
   public execute(action: GameAction): ActionResponse {
     try {
       const currentPlayer = this.state.players[this.state.currentPlayerIndex];
@@ -125,7 +113,6 @@ export class GameManager {
         case "ROLL_DICE":
           return this.handleRollDice();
         case "BUILD":
-          // Logique de construction simplifi�e pour Rayan
           return { success: true, state: this.state, message: "Construction valid�e (Mock)" };
         case "TRADE":
           return { success: true, state: this.state, message: "�change valid� (Mock)" };
@@ -163,7 +150,6 @@ export class GameManager {
   }
 
   private distributeResources(roll: number) {
-    // Logique de distribution spatiale (prochaine �tape)
   }
 
   private generateStandardBoard(state: GameState): Tile[] {
@@ -185,7 +171,6 @@ export class GameManager {
     const tiles: Tile[] = [];
     let numIdx = 0;
 
-    // Coordonn�es axiales standard de Catane
     const coords: HexCoord[] = [];
     for (let q = -2; q <= 2; q++) {
       for (let r = Math.max(-2, -q - 2); r <= Math.min(2, -q + 2); r++) {

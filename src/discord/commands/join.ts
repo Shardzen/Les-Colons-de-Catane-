@@ -25,7 +25,7 @@ export const joinCommand = {
     const success = gameManager.joinGame(interaction.channelId, player);
     
     if (success) {
-        const game = gameManager.getGame(interaction.channelId);
+        const game = gameManager.getGame(interaction.channelId);  // tu essaies de passer un argument (une valeur entre les parenthèses) à une fonction ou une méthode qui a été définie pour n'en recevoir aucun
         const playerList = game?.players.map(p => p.username).join(', ');
         const embed = new EmbedBuilder()
             .setTitle("Les Colons de Catane - Lobby")
