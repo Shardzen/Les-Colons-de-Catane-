@@ -1,14 +1,6 @@
 import { REST, Routes, SlashCommandBuilder } from "discord.js";
 import 'dotenv/config'
 
-// Ton tableau commandsData utilise les variables join, start et build avant même que tu les aies créées plus bas. 
-// L'ordinateur lit de haut en bas, donc il va te dire qu'elles n'existent pas. 
-// Déplace ton tableau tout en bas du fichier.
-
-
-                
-
-//async function attendre réponse du net
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN!);
 
 type DeployCommandsProps = {
@@ -56,5 +48,6 @@ const BuildCommand = new SlashCommandBuilder()
       .setDescription('Coordinates')
       .setRequired(true)
           );
+          
 
 const commandsData = [JoinCommand, StartCommand, BuildCommand].map(cmd => cmd.toJSON());
