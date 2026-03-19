@@ -13,15 +13,12 @@ export const DevCardsCommand = {
 //Utilise les memes methodes d'exécution des autres modes de jeu
 async execute(interaction: CommandInteraction, gameManager: GameManager) {
 
-// Récupère l'utilisateur Discord qui a déclenché la commande
     const user = interaction.user;
 
     // Joueur analysé par les données du serveur Discord
     const player: Player = {
-        id: user.id,               // Identifiant unique Discord de l'utilisateur
-        username: user.username,   // Nom affiché dans Discord
-
-        // Cartes de développement initiales : valeurs initialisées à 0
+        id: user.id,               
+        username: user.username,  
         devCards: { knights: 0, victoryPoints: 0, special: [] 
 
         },  
@@ -33,7 +30,6 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
 class DevCards  {
 
 }
-}
 
 
-}
+
