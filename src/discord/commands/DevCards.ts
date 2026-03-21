@@ -3,33 +3,36 @@ import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.j
 import { GameManager } from '../../core/gameManager.js';
 import { Player } from '../../core/types.js';
 
-
 export const DevCardsCommand = {
             data: new SlashCommandBuilder()
-                .setName("Deck cards")
+                .setName("Deckcards")
                 .setDescription("Affiche le deck"),
 
 
 //Utilise les memes methodes d'exécution des autres modes de jeu
 async execute(interaction: CommandInteraction, gameManager: GameManager) {
 
+    //Importer la classe Joueur pour affecter valeurs au(x) joueur(s)
     const user = interaction.user;
+     const player: Player = {
+            id: user.id,
+            username: user.username,
+            devCards: {
+                knights: 0,
+                victoryPoints: 0,
+                special: []
+            }
+        };
 
-    // Joueur analysé par les données du serveur Discord
-    const player: Player = {
-        id: user.id,               
-        username: user.username,  
-        devCards: { knights: 0, victoryPoints: 0, special: [] 
+   //Créer un nouveau deck de type deck 
+        const deck = NewDeck();
 
-        },  
-    }
-    player.devCards();
+        // Mélange le deck 
+        shuffle(deck);
+
+    await interaction.reply(`Deck créé avec ${deck} cartes`);
+
 }
 }
-
-class DevCards  {
-
-}
-
 
 
