@@ -45,6 +45,21 @@ export type PlayerColor = "RED" | "BLUE" | "WHITE" | "ORANGE";
 
 export type ConstructionType = "ROAD" | "SETTLEMENT" | "CITY";
 
+export type DevCard = {
+    type: "knight" | "progress" | "victory";
+    knight: Knight[]; // Type de chavaliers 
+    played: boolean; // si utilisée
+    turn: number; // pour règle "pas jouer ce tour"
+    victoryPoints: number; //PV (Max 10)
+    effect: string; // effet cartes 
+};
+
+export type Knight = {
+    level: 1 | 2 | 3; // 2 chevaliers de type =/
+    active: boolean; // Affiche si on peut l'utiliser ou pas
+};
+
+
 // --- 4. JOUEUR ---
 
 export interface Player {
@@ -60,12 +75,9 @@ export interface Player {
     cities: number;
   };
   // Cartes de d�veloppement poss�d�es (simplifi�es pour l\\'interface de base)
-  devCards: {
-    knights: number;
-    victoryPoints: number;
-    special: string[]; // Monopole, Invention, etc.
-  };
+  devCards: DevCard[];
 };
+
 
 // --- 5. �TAT GLOBAL DU JEU (SINGLE SOURCE OF TRUTH) ---
 
