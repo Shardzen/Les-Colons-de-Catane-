@@ -3,6 +3,12 @@ import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.j
 import { GameManager } from '../../core/gameManager.js';
 import { Player } from '../../core/types.js';
 
+export type Knight = {
+    level: 1 | 2 | 3; // 2 chevaliers de type =/
+    active: boolean; // Affoche si on peut l'utiliser ou pas
+};
+
+
 export const DevCardsCommand = {
             data: new SlashCommandBuilder()
                 .setName("Deckcards")
@@ -18,7 +24,7 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
             id: user.id,
             username: user.username,
             devCards: {
-                knights: 0,
+                knights: 1, //Mettre valeurs entre 1 et 3 pour chaque type de chevalier
                 victoryPoints: 0,
                 special: []
             }
@@ -31,8 +37,9 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
         shuffle(deck);
 
     await interaction.reply(`Deck créé avec ${deck} cartes`);
+}
+}
 
-}
-}
+
 
 

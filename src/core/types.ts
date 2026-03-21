@@ -65,7 +65,7 @@ export interface Player {
     victoryPoints: number;
     special: string[]; // Monopole, Invention, etc.
   };
-}
+};
 
 // --- 5. �TAT GLOBAL DU JEU (SINGLE SOURCE OF TRUTH) ---
 
