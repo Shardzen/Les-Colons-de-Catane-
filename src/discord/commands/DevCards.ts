@@ -1,25 +1,12 @@
 //Fonction qui assignée pour ccréer un deck de cartes qui servira dans la partie avec implémentation ensuite d'effets spéciaux 
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
 import { GameManager } from '../../core/gameManager.js';
-import { PlayerColor, ResourceMap, DevCard } from '../../core/types.js';
+import { Player, PlayerColor } from '../../core/types.js';
 
 
-//Créer fonction export pour la différencier de la classe PLayer du fichier d'origine
 //Propre au fichier 
-export interface Player {
-  id: string;
-  username: string;
-  color: PlayerColor | null; // ← ici
-  resources: ResourceMap;
-  victoryPoints: number;
-  stock: {
-    roads: number;
-    settlements: number;
-    cities: number;
-  };
-  devCards: DevCard[];
-}
 
+export type Player2 = Player & {color: PlayerColor / null}
 
 export const DevCardsCommand = {
             data: new SlashCommandBuilder()
@@ -66,8 +53,7 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
         // Mélange le deck 
         function shuffle(deck: DevCard[]): DevCard[] {
   for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
+    const j = Math.floor(Math.random() * (i + 1)); // Fonction qui affiche un nombre aléatoire de 0 à 1
   }
         return deck;
 }
