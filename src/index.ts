@@ -109,6 +109,9 @@ client.on("interactionCreate", async (i) => {
             }
         }
         if (i.isButton()) {
+          console.log("CLICK PAR :", i.user.id);
+          console.log("JOUEUR ACTUEL :", currentGame?.currentPlayer.id);
+          
             if (!currentGame || i.user.id !== currentGame.currentPlayer.id) return i.reply({ content: "Pas ton tour !", ephemeral: true });
             if (i.customId === "roll_dice") { const res = currentGame.rollDice(); await i.deferUpdate(); await updateBoard(i, res ? `<@${i.user.id}> a fait un **${res.total}**.` : `<@${i.user.id}> a lancé les dés.`); }
             if (i.customId === "setup_settlement" || i.customId === "build_settlement") {
