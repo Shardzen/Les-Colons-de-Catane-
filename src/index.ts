@@ -23,12 +23,12 @@ const commands = [
   new SlashCommandBuilder().setName("finish").setDescription("Terminer la session"),
 ];
 
-async function sendTurnDM(player : any) {
+async function sendTurnDM(player : any, row : any) {
       console.log("sendTurnDM appelée pour", player.id);
 try {
       const user = await client.users.fetch(player.id);
 
-      await user.send("🎲 C'est ton tour sur Catane !");
+      await user.send({ content: "🎲 C'est ton tour !", components: [row] });
 } catch (e) { console.log("Erreur DM:", e); }
 }
 
@@ -68,7 +68,7 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
             if (currentGame.setupStep === "SETTLEMENT") row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Placer Colonie').setStyle(ButtonStyle.Success));
             else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Placer Route').setStyle(ButtonStyle.Success));
         }
-
+        await sendTurnDM(currentGame.currentPlayer, row);
         const msg = currentGame.state === GameState.FINISHED ? `🏆 Fin !` : `🎮 Tour en cours (${currentGame.state})`;
         if (interaction && interaction.isRepliable()) {
             if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [row], files: [] });
@@ -108,11 +108,17 @@ client.on("interactionCreate", async (i) => {
                 await i.reply({ embeds: [embed] });
             }
         }
-        if (i.isButton()) {
-          console.log("CLICK PAR :", i.user.id);
-          console.log("JOUEUR ACTUEL :", currentGame?.currentPlayer.id);
-          
-            if (!currentGame || i.user.id !== currentGame.currentPlayer.id) return i.reply({ content: "Pas ton tour !", ephemeral: true });
+                if (i.isButton()) {
+                if (!currentGame)
+                return i.reply({ content: "Pas de partie", ephemeral: true });
+              
+                if (i.user.id !== currentGame.currentPlayer.id)
+                return i.reply({ content: "Pas ton tour !", ephemeral: true });
+
+                  if (!currentGame)
+                  return i.reply({ content: "Pas de partie", ephemeral: true });
+                  if (i.user.id !== currentGame.currentPlayer.id && !pendingActions.has(i.user.id))
+                  return i.reply({ content: "Pas ton tour !", ephemeral: true });
             if (i.customId === "roll_dice") { const res = currentGame.rollDice(); await i.deferUpdate(); await updateBoard(i, res ? `<@${i.user.id}> a fait un **${res.total}**.` : `<@${i.user.id}> a lancé les dés.`); }
             if (i.customId === "setup_settlement" || i.customId === "build_settlement") {
                 const spots = currentGame.getPlaceableNodes(i.user.id).map((n, j) => ({ id: n.id, label: getLabel(j) }));
@@ -144,16 +150,26 @@ client.on("interactionCreate", async (i) => {
                 const s = new StringSelectMenuBuilder().setCustomId('trade_give').addOptions(Object.values(ResourceType).filter(r => r !== ResourceType.DESERT).map(r => ({ label: r, value: r })));
                 await i.reply({ content: "🤝 Donner 4 ?", components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
-            if (i.customId === "end_turn") { currentGame.nextTurn(); await sendTurnDM(currentGame.currentPlayer);  await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
+            if (i.customId === "end_turn") { currentGame.nextTurn();  await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
         }
         if (i.isStringSelectMenu()) {
-            if (i.customId === "select_spot") {
-                const a = pendingActions.get(i.user.id); if (!a) return;
-                if (a.type === 'settlement' && currentGame!.buildSettlement(i.user.id, i.values[0])) { await i.update({ content: "✅ OK", components: [], files: [] }); await updateBoard(null, `<@${i.user.id}> a posé une Colonie.`); }
-                else if (a.type === 'city' && currentGame!.buildCity(i.user.id, i.values[0])) { await i.update({ content: "✅ OK", components: [], files: [] }); await updateBoard(null, `<@${i.user.id}> a posé une Ville.`); }
-                else if (a.type === 'road' && currentGame!.buildRoad(i.user.id, i.values[0])) { await i.update({ content: "✅ OK", components: [], files: [] }); await updateBoard(null, `<@${i.user.id}> a posé une Route.`); }
-                pendingActions.delete(i.user.id);
-            }
+      const action = pendingActions.get(i.user.id);
+      if (!action) return i.reply({ content: "Action expirée", ephemeral: true });
+
+              if (i.customId === "select_spot") {
+              if (action.type === 'settlement' && currentGame!.buildSettlement(i.user.id, i.values[0])) {
+              await i.update({ content: "✅ OK", components: [], files: [] });
+              await updateBoard(null, `<@${i.user.id}> a posé une Colonie.`);
+        }    else if (action.type === 'city' && currentGame!.buildCity(i.user.id, i.values[0])) {
+              await i.update({ content: "✅ OK", components: [], files: [] });
+              await updateBoard(null, `<@${i.user.id}> a posé une Ville.`);
+        } else if (action.type === 'road' && currentGame!.buildRoad(i.user.id, i.values[0])) {
+              await i.update({ content: "✅ OK", components: [], files: [] });
+              await updateBoard(null, `<@${i.user.id}> a posé une Route.`);
+        }
+        pendingActions.delete(i.user.id);
+        return;
+      }
             if (i.customId === 'trade_give') {
                 const r = i.values[0] as ResourceType;
                 const s = new StringSelectMenuBuilder().setCustomId(`trade_get_${r}`).addOptions(Object.values(ResourceType).filter(r2 => r2 !== ResourceType.DESERT && r2 !== r).map(r2 => ({ label: r2, value: r2 })));
