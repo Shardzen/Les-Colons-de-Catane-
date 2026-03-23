@@ -28,7 +28,8 @@ export class GameManager {
       resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 },
       victoryPoints: 0,
       stock: { roads: 15, settlements: 5, cities: 4 },
-      devCards: { knights: 0, victoryPoints: 0, special: [] }
+      devCards: []
+
     }));
 
 
@@ -71,7 +72,7 @@ export class GameManager {
     resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 },
     victoryPoints: 0,
     stock: { roads: 15, settlements: 5, cities: 4 },
-    devCards: { knights: 0, victoryPoints: 0, special: [] }
+    devCards: []
   };
 
   this.state.players.push(newPlayer);
@@ -91,7 +92,7 @@ export class GameManager {
     resources: { WOOD: 0, BRICK: 0, SHEEP: 0, WHEAT: 0, ORE: 0 },
     victoryPoints: 0,
     stock: { roads: 15, settlements: 5, cities: 4 },
-    devCards: { knights: 0, victoryPoints: 0, special: [] }
+    devCards: []
   };
 
   this.state.players.push(newPlayer);
