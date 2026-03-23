@@ -53,13 +53,13 @@ export type ConstructionType = "ROAD" | "SETTLEMENT" | "CITY";
 export type DevCard =
   | {
       type: "knight";
-      knights: Knight[];
+      knights: Knight[]; // Création type Knight avec tableau
       played: boolean;
       turn: number;
     }
   | {
       type: "victory";
-      victoryPoints: number;
+      victoryPoints: number; // 1 à 10
       played: boolean;
       turn: number;
     }
@@ -78,7 +78,7 @@ export type Knight = {
 export type ProgressEffect =
   | { type: "roadBuilding" } // Construire routes
   | { type: "yearOfPlenty" } // Choisir 2 ressources dans le jeu
-  | { type: "monopoly" }; // Monopole : joueur annonce un type de ressource et autres joueur lui donnent
+  | { type: "monopoly" }; // Monopole : joueur annonce un type de ressource et autres joueurs lui donnent
 
 // --- 4. JOUEUR ---
 
