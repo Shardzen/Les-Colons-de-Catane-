@@ -42,11 +42,10 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
        
 
 
-   //Créer un nouveau deck de type deck 
     const deck = NewDeck();
 
     function NewDeck(): DevCard[] { 
-        for (let i = 0; i < 14; i++) { //14 cartes chevazliers disponibles
+        for (let i = 0; i < 14; i++) { //14 cartes chevaliers disponibles
         deck.push({
       type: "knight",
       played : false,
