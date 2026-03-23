@@ -130,7 +130,7 @@ export class GameManager {
 
   private handleRollDice(): ActionResponse {
     if (this.state.phase !== "ROLLING") {
-      throw new Error("Vous ne pouvez pas lancer les d�s maintenant.");
+      throw new Error("Vous ne pouvez pas lancer les dés maintenant.");
     }
 
     const d1 = Math.floor(Math.random() * 6) + 1;
@@ -146,7 +146,7 @@ export class GameManager {
       this.state.phase = "TRADING";
     }
 
-    return { success: true, state: this.state, message: `R�sultat du d� : ${total}` };
+    return { success: true, state: this.state, message: `Résultat du dés : ${total}` };
   }
 
   private distributeResources(roll: number) {
