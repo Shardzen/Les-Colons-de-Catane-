@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
-=======
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
->>>>>>> command
 import { GameManager } from '../../core/gameManager.js';
 import { Player, PlayerColor } from '../../core/types.js';
 
@@ -12,27 +8,20 @@ export const joinCommand = {
   data: new SlashCommandBuilder()
     .setName('join')
     .setDescription('Joins an existing game lobby'),
-<<<<<<< HEAD
   
   // Fonction exécutée quand un utilisateur lance la commande /join
   async execute(interaction: CommandInteraction, gameManager: GameManager) {
-=======
-<<<<<<< HEAD
 
-=======
   
   // Fonction exécutée quand un utilisateur lance la commande /join
->>>>>>> command
   async execute(interaction: CommandInteraction, gameManager: GameManager) {
 
     // Récupère l'utilisateur Discord qui a déclenché la commande
     const user = interaction.user;
-<<<<<<< HEAD
     
     const colors: PlayerColor[] = ["RED", "BLUE", "WHITE", "ORANGE"];
     const currentColorIndex = gameManager.getGame().players.length % colors.length;
     const assignedColor = colors[currentColorIndex];
->>>>>>> 1c2727e502f35674d99e1d622791299d332e0a34
 
     // Récupère l'utilisateur Discord qui a déclenché la commande
     const user = interaction.user;
@@ -49,8 +38,6 @@ export const joinCommand = {
         resources: {
             'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0
         },
-<<<<<<< HEAD
-=======
         devCards: {knights: 0, victoryPoints: 0, special: []},
         stock: { roads: 15, settlements: 5, cities: 4 },
 =======
@@ -67,7 +54,6 @@ export const joinCommand = {
         resources: {
             'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0
         },
->>>>>>> 1c2727e502f35674d99e1d622791299d332e0a34
 
         // Cartes de développement initiales : valeurs initialisées à 0
         devCards: { knights: 0, victoryPoints: 0, special: [] },
@@ -76,9 +62,6 @@ export const joinCommand = {
         stock: { roads: 0, settlements: 0, cities: 0 },
 
         // Points de victoire de départ
-<<<<<<< HEAD
-=======
->>>>>>> command
 >>>>>>> 1c2727e502f35674d99e1d622791299d332e0a34
         victoryPoints: 0
     };

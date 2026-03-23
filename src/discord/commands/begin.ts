@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-﻿import { SlashCommandBuilder, CommandInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-=======
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
->>>>>>> command
 import { GameManager } from '../../core/gameManager.js';
 import { renderBoardEmoji } from '../../core/boardRenderer.js';
 
@@ -15,20 +11,6 @@ export const beginCommand = {
   
   // Fonction exécutée quand un utilisateur lance la commande /begin
   async execute(interaction: CommandInteraction, gameManager: GameManager) {
-<<<<<<< HEAD
-    const game = gameManager.getGame();
-
-    if (game.players.length >= 2) {
-        const boardRender = renderBoardEmoji(game);
-
-        const rollButton = new ButtonBuilder()
-            .setCustomId('roll_dice')
-            .setLabel('Lancer les Dés')
-            .setStyle(ButtonStyle.Primary);
-
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(rollButton);
-
-=======
 
     // Tente de démarrer la partie dans le salon courant.
     // Retourne false s'il n'y a pas assez de joueurs ou si la partie est déjà lancée.
@@ -54,7 +36,6 @@ export const beginCommand = {
         // Construit l'embed d'annonce du début de partie avec :
         // - le plateau de jeu en emojis
         // - l'indication du premier joueur à jouer
->>>>>>> command
         const embed = new EmbedBuilder()
             .setTitle("Les Colons de Catane - La partie commence !")
             .setDescription(
