@@ -119,31 +119,43 @@ export class CatanEngine {
     return { total, harvests, isRobber: total === 7, toDiscard };
   }
 
-  public discardResources(playerId: string, resources: Partial<Record<ResourceType, number>>): boolean {
-      if (this.state !== GameState.DISCARDING) return false;
-      const p = this.players.find(p => p.id === playerId);
-      if (!p) return false;
+  public moveRobber(hexId: string, playerId: string): { success: boolean, victims: string[] } {
+      if (this.state !== GameState.ROBBER_MOVE || this.currentPlayer.id !== playerId) return { success: false, victims: [] };
 
-      const totalToDiscard = Math.floor(this.getPlayerResourceCount(playerId) / 2);
-      const givenCount = Object.values(resources).reduce((a, b) => a + (b || 0), 0);
-      if (givenCount !== totalToDiscard) return false;
+      const newHex = this.map.find(h => h.id === hexId);
+      if (!newHex || newHex.hasRobber) return { success: false, victims: [] };
 
-      //Vérifier si le joueur a bien ces ressources
-      for (const [res, qty] of Object.entries(resources)) {
-          if (p.resources[res as ResourceType] < (qty || 0)) return false;
+      // Retirer l'ancien voleur
+      this.map.forEach(h => h.hasRobber = false);
+      // Mettre le nouveau
+      newHex.hasRobber = true;
+
+      // Trouver les victimes (joueurs adverses sur cette case avec au moins 1 ressource)
+      const victims = this.getVictimsOnHex(hexId, playerId);
+
+      if (victims.length > 0) {
+          this.state = GameState.ROBBER_STEAL;
+      } else {
+          this.state = GameState.PLAYING; // Personne à voler, on reprend le tour
       }
 
-      //appliquer la défausse
-      for (const [res, qty] of Object.entries(resources)) {
-          p.resources[res as ResourceType] -= (qty || 0);
-      }
+      return { success: true, victims };
+  }
 
-      //vérifier si d'autres joueurs doivent défausser
-      const stillNeeding = this.players.filter(pl => this.getPlayerResourceCount(pl.id) > 7);
-      if (stillNeeding.length === 0) {
-          this.state = GameState.ROBBER_MOVE;
-      }
-      return true;
+  private getVictimsOnHex(hexId: string, robberId: string): string[] {
+      const victimIds = new Set<string>();
+      this.nodes.values().forEach(node => {
+          if (node.hexes.some(h => h.id === hexId)) {
+              const b = this.settlements.get(node.id);
+              if (b && b.playerId !== robberId) {
+                  const p = this.players.find(p => p.id === b.playerId)!;
+                  if (this.getPlayerResourceCount(p.id) > 0) {
+                      victimIds.add(p.id);
+                  }
+              }
+          }
+      });
+      return Array.from(victimIds);
   }
 
   public tradeWithBank(playerId: string, give: ResourceType, receive: ResourceType): boolean {
