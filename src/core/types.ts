@@ -83,6 +83,10 @@ export type Player = {
     settlements: number;
     cities: number;
   };
+<<<<<<< HEAD
+=======
+  // Cartes de d�veloppement poss�d�es (simplifi�es pour l\\'interface de base)
+>>>>>>> 1c2727e502f35674d99e1d622791299d332e0a34
   devCards: DevCard[];
 };
 
