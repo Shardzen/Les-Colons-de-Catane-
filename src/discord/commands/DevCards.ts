@@ -6,7 +6,7 @@ import { Player, PlayerColor } from '../../core/types.js';
 
 //Propre au fichier 
 
-export type Player2 = Player & {color: PlayerColor / null}
+export type Player2 = Player & {color: PlayerColor | null}
 
 export const DevCardsCommand = {
             data: new SlashCommandBuilder()
@@ -22,7 +22,7 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
      const player: Player = {
             id: user.id,
             username: user.username,
-            color: null,
+            color: PlayerColor,
             resources: {
                     WOOD: 0,
                     BRICK: 0,
@@ -45,8 +45,22 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
    //Créer un nouveau deck de type deck 
     const deck = NewDeck();
 
-    function NewDeck(): DevCard[] {
-
+    function NewDeck(): DevCard[] { 
+        for (let i = 0; i < 14; i++) { //14 cartes chevazliers disponibles
+        deck.push({
+      type: "knight",
+      played : false,
+      turn: 0
+    });
+  }
+            for (let i = 0; i < 5; i++) { //5 cartes PV
+            deck.push({
+            type: "victory",
+            victoryPoints: 1,
+            played : false,
+            turn: 0
+    });
+  }
     }
 
 
