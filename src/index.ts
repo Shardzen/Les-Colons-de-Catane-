@@ -24,11 +24,12 @@ const commands = [
 ];
 
 async function sendTurnDM(player : any) {
+      console.log("sendTurnDM appelée pour", player.id);
 try {
       const user = await client.users.fetch(player.id);
 
       await user.send("🎲 C'est ton tour sur Catane !");
-} catch (e) {}
+} catch (e) { console.log("Erreur DM:", e); }
 }
 
 async function updateBoard(interaction?: any, logMsg: string = "") {
@@ -55,11 +56,15 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
                     new ButtonBuilder().setCustomId('build_settlement').setLabel('🏠 Colonie').setStyle(ButtonStyle.Success),
                     new ButtonBuilder().setCustomId('build_road').setLabel('🛣️ Route').setStyle(ButtonStyle.Success),
                     new ButtonBuilder().setCustomId('build_city').setLabel('🏙️ Ville').setStyle(ButtonStyle.Success),
+                    new ButtonBuilder().setCustomId('move_robber').setLabel('🦹Voleur').setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder().setCustomId('trade_bank').setLabel('🤝 Commerce').setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder().setCustomId('end_turn').setLabel('⭐ Fin').setStyle(ButtonStyle.Secondary)
                 );
             }
-        } else if (currentGame.state !== GameState.FINISHED) {
+        } else if (currentGame.state === "ROBBER_MOVE") {
+          row.addComponents(new ButtonBuilder().setCustomId('move_robber').setLabel('🦹 Déplacer le voleur').setStyle(ButtonStyle.Success));
+        }
+        else if (currentGame.state !== GameState.FINISHED) {
             if (currentGame.setupStep === "SETTLEMENT") row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Placer Colonie').setStyle(ButtonStyle.Success));
             else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Placer Route').setStyle(ButtonStyle.Success));
         }
@@ -108,7 +113,7 @@ client.on("interactionCreate", async (i) => {
         }
         if (i.isButton()) {
             if (!currentGame || i.user.id !== currentGame.currentPlayer.id) return i.reply({ content: "Pas ton tour !", ephemeral: true });
-            if (i.customId === "roll_dice") { const res = currentGame.rollDice(); if (res) { await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fait un **${res.total}**.`); } }
+            if (i.customId === "roll_dice") { const res = currentGame.rollDice(); await i.deferUpdate(); await updateBoard(i, res ? `<@${i.user.id}> a fait un **${res.total}**.` : `<@${i.user.id}> a lancé les dés.`); }
             if (i.customId === "setup_settlement" || i.customId === "build_settlement") {
                 const spots = currentGame.getPlaceableNodes(i.user.id).map((n, j) => ({ id: n.id, label: getLabel(j) }));
                 pendingActions.set(i.user.id, { type: 'settlement', spots });
@@ -129,6 +134,11 @@ client.on("interactionCreate", async (i) => {
                 const b = await MapRenderer.renderInteractiveMap(currentGame, spots.slice(0, 25), true);
                 const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: `Pos ${s.label}`, value: s.id })));
                 await i.reply({ content: "🏙️ Améliorer ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+            }
+             if (i.customId === "move_robber") {
+              currentGame.state = GameState.PLAYING;
+              await i.deferUpdate();
+              await updateBoard(i, "Le voleur a été déplacé");
             }
             if (i.customId === "trade_bank") {
                 const s = new StringSelectMenuBuilder().setCustomId('trade_give').addOptions(Object.values(ResourceType).filter(r => r !== ResourceType.DESERT).map(r => ({ label: r, value: r })));

@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/Shardzen/Les-Colons-de-Catane-#readme",
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.96",
+    "@napi-rs/canvas": "^0.1.97",
     "@prisma/client": "6.4.1",
     "discord.js": "^14.25.1"
   },

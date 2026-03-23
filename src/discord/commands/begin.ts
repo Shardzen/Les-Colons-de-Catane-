@@ -12,7 +12,7 @@ export const beginCommand = {
   async execute(interaction: CommandInteraction, gameManager: GameManager) {
 
 
-    const success = gameManager.startGame(interaction.channelId);
+    const success = gameManager.createGame(interaction.channelId);
     
     if (success) {
         const game = gameManager.getGame(interaction.channelId)!;
