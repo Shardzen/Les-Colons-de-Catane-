@@ -1,46 +1,14 @@
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
+<<<<<<< HEAD
 import { GameManager } from '../../core/gameManager.js';
 import { Player, PlayerColor } from '../../core/types.js';
+=======
+
+>>>>>>> catan
 
 export const joinCommand = {
-
-  // Définition de la commande slash Discord : nom "/join" et description affichée dans l'interface
   data: new SlashCommandBuilder()
     .setName('join')
-    .setDescription('Joins an existing game lobby'),
-  
-  // Fonction exécutée quand un utilisateur lance la commande /join
-  async execute(interaction: CommandInteraction, gameManager: GameManager) {
-
-  
-  // Fonction exécutée quand un utilisateur lance la commande /join
-  async execute(interaction: CommandInteraction, gameManager: GameManager) {
-
-    // Récupère l'utilisateur Discord qui a déclenché la commande
-    const user = interaction.user;
-    
-    const colors: PlayerColor[] = ["RED", "BLUE", "WHITE", "ORANGE"];
-    const currentColorIndex = gameManager.getGame().players.length % colors.length;
-    const assignedColor = colors[currentColorIndex];
-
-    // Récupère l'utilisateur Discord qui a déclenché la commande
-    const user = interaction.user;
-
-    // Joueur analysé par les données du serveur Discord
-    const player: Player = {
-        id: user.id,               // Identifiant unique Discord de l'utilisateur
-        username: user.username,   // Nom affiché dans Discord
-        
-        // Chaque valeur pour chaque couleur, chaque valeur selon un tableau.
-        color: PlayerColor["BLUE", "RED"],
-
-        // Ressources : initialisées à 0 (bois, argile, mouton, blé, minerai).
-        resources: {
-            'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0
-        },
-        devCards: {knights: 0, victoryPoints: 0, special: []},
-        stock: { roads: 15, settlements: 5, cities: 4 },
-=======
 
     // Joueur analysé par les données du serveur Discord
     const player: Player = {
@@ -62,7 +30,6 @@ export const joinCommand = {
         stock: { roads: 0, settlements: 0, cities: 0 },
 
         // Points de victoire de départ
->>>>>>> 1c2727e502f35674d99e1d622791299d332e0a34
         victoryPoints: 0
     };
 
@@ -111,11 +78,56 @@ export const joinCommand = {
         await interaction.reply({ 
             content: "Impossible de rejoindre la partie. Soit elle a déjà commencé, soit elle est complète, soit vous n'avez pas de lobby ouvert dans ce salon.", 
             ephemeral: true  // true = condition vraie pour afficher message à l'utilisateur
-        });
-<<<<<<< HEAD
 =======
->>>>>>> command
->>>>>>> 1c2727e502f35674d99e1d622791299d332e0a34
+    .setDescription('Rejoindre le lobby de la partie en cours'),
+  
+  async execute(interaction: CommandInteraction, currentGame: any, lobbyPlayers: any[]) {
+    const user = interaction.user;
+
+    if (currentGame) {
+        return interaction.reply({ 
+            content: "Une partie est déjà en cours. Attendez la fin pour en lancer une nouvelle.", 
+            ephemeral: true 
+>>>>>>> catan
+        });
     }
+
+    if (lobbyPlayers.find(p => p.id === user.id)) {
+        return interaction.reply({ 
+            content: "Vous avez déjà rejoint le lobby !", 
+            ephemeral: true 
+        });
+    }
+
+    if (lobbyPlayers.length >= 4) {
+        return interaction.reply({ 
+            content: "Le lobby est complet (4 joueurs max).", 
+            ephemeral: true 
+        });
+    }
+
+    const colors = ["#FF0000", "#0000FF", "#00FF00", "#FFA500"]; 
+    const playerColor = colors[lobbyPlayers.length];
+
+    // Ajouter le joueur au lobby
+    lobbyPlayers.push({
+        id: user.id,
+        username: user.username,
+        color: playerColor
+    });
+
+    const playerList = lobbyPlayers.map(p => p.username).join(', ');
+
+    const embed = new EmbedBuilder()
+        .setTitle("🏰 Les Colons de Catane - Lobby")
+        .setDescription(`**${user.username}** a rejoint l'aventure !
+        
+**Joueurs (${lobbyPlayers.length}/4) :**
+${playerList}`)
+        .setColor(playerColor as any)
+        .setThumbnail(user.displayAvatarURL())
+        .setFooter({ text: "Utilisez /begin pour lancer la partie quand tout le monde est prêt !" });
+
+    await interaction.reply({ embeds: [embed] });
   }
 };
