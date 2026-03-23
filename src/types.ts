@@ -56,5 +56,7 @@ export enum GameState {
   SETUP_1 = "SETUP_1", 
   SETUP_2 = "SETUP_2", 
   PLAYING = "PLAYING",
+  DISCARDING = "DISCARDING",
+  ROBBER_MOVE = "ROBBER_MOVE",
   FINISHED = "FINISHED"
 }
