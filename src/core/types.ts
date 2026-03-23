@@ -41,17 +41,58 @@ export interface Tile {
 
 // --- 3. CONSTRUCTIONS & EMPLACEMENTS ---
 
-export type PlayerColor = "RED" | "BLUE" | "WHITE" | "ORANGE";
+const enum PlayerColor {
+  RED = 'RED',
+  BLUE = 'BLUE',
+  WHITE = 'WHITE',
+  ORANGE = 'ORANGE'
+}
 
 export type ConstructionType = "ROAD" | "SETTLEMENT" | "CITY";
 
+export type DevCard =
+  | {
+      type: "knight";
+      knights: Knight[]; // Création type Knight avec tableau
+      played: boolean;
+      turn: number;
+    }
+  | {
+      type: "victory";
+      victoryPoints: number; // 1 à 10
+      played: boolean;
+      turn: number;
+    }
+  | {
+      type: "progress";
+      effect: ProgressEffect;
+      played: boolean;
+      turn: number;
+    };
+
+export type Knight = {
+    level: 1 | 2 | 3; // 2 chevaliers de type =/
+    active: boolean; // Affiche si on peut l'utiliser ou pas
+};
+
+export type ProgressEffect =
+  | { type: "roadBuilding" } // Construire routes
+  | { type: "yearOfPlenty" } // Choisir 2 ressources dans le jeu
+  | { type: "monopoly" }; // Monopole : joueur annonce un type de ressource et autres joueurs lui donnent
+
 // --- 4. JOUEUR ---
 
-export interface Player {
+export type Player = {
   id: string;
   username: string;
   color: PlayerColor;
-  resources: ResourceMap;
+  resources: {
+    WOOD: number,
+    BRICK: number,
+    SHEEP: number,
+    WHEAT: number,
+    ORE: number,
+  },
   victoryPoints: number;
   // Stock restant pour respecter les r�gles de Catane (ex: 15 routes max)
   stock: {
@@ -60,12 +101,9 @@ export interface Player {
     cities: number;
   };
   // Cartes de d�veloppement poss�d�es (simplifi�es pour l\\'interface de base)
-  devCards: {
-    knights: number;
-    victoryPoints: number;
-    special: string[]; // Monopole, Invention, etc.
-  };
-}
+  devCards: DevCard[];
+};
+
 
 // --- 5. �TAT GLOBAL DU JEU (SINGLE SOURCE OF TRUTH) ---
 

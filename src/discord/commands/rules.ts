@@ -1,14 +1,20 @@
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from "discord.js";
 
 export const rulesCommand = {
+
+  // Affiche "/rules" dans le Discord
   data: new SlashCommandBuilder()
     .setName("rules")
     .setDescription("Affiche les règles du jeu"),
 
+  // Discord interagit avec la commande /rules
   async execute(interaction: CommandInteraction) {
+
+    // Embed affiche consignes
     const embed = new EmbedBuilder()
-      .setTitle("📜 Règles des Colons de Catane")
-      .setColor(0xE8A838)
+      .setTitle("📜 Règles des Colons de Catane") // Titre principal de l'embed
+      .setColor(0xE8A838)                          // Couleur dorée cohérente avec le thème Catane
+
       .addFields(
         {
           name: "🎯 Objectif",
@@ -31,8 +37,11 @@ export const rulesCommand = {
           value: "• Village : **1 PV**\n• Ville : **2 PV**\n• Route la plus longue (5+) : **2 PV**\n• Armée la plus puissante (3+) : **2 PV**"
         }
       )
+
+      // Affiche texte en bas de page
       .setFooter({ text: "Bonne chance à tous !" });
 
+    // Envoie message
     await interaction.reply({ embeds: [embed] });
   }
 };
