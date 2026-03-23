@@ -8,7 +8,6 @@ export class CatanEngine {
   public currentPlayerIndex: number = 0;
   public state: GameState = GameState.SETUP_1;
   
-  // Nouveaux verrous de tour
   public hasRolled: boolean = false;
   public setupStep: "SETTLEMENT" | "ROAD" = "SETTLEMENT";
 
@@ -65,19 +64,25 @@ export class CatanEngine {
         if (this.currentPlayerIndex < this.players.length - 1) {
             this.currentPlayerIndex++;
         } else {
-            this.state = GameState.SETUP_2; // Le dernier joueur rejoue direct
+            this.state = GameState.SETUP_2; 
         }
     } else if (this.state === GameState.SETUP_2) {
         if (this.currentPlayerIndex > 0) {
             this.currentPlayerIndex--;
         } else {
-            this.state = GameState.PLAYING; // On commence enfin la partie
+            this.state = GameState.PLAYING; 
         }
     } else {
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
     }
     this.hasRolled = false;
     this.setupStep = "SETTLEMENT";
+  }
+
+  public getPlayerResourceCount(playerId: string): number {
+    const p = this.players.find(p => p.id === playerId);
+    if (!p) return 0;
+    return Object.values(p.resources).reduce((a, b) => a + b, 0);
   }
 
   public rollDice() {
@@ -87,7 +92,15 @@ export class CatanEngine {
     this.hasRolled = true;
 
     const harvests: Record<string, Record<ResourceType, number>> = {};
-    if (total !== 7) {
+    const toDiscard: string[] = [];
+
+    if (total === 7) {
+        this.players.forEach(p => {
+            if (this.getPlayerResourceCount(p.id) > 7) toDiscard.push(p.id);
+        });
+        if (toDiscard.length > 0) this.state = GameState.DISCARDING;
+        else this.state = GameState.ROBBER_MOVE;
+    } else {
         this.map.filter(h => h.value === total && !h.hasRobber).forEach(hex => {
             this.nodes.values().forEach(node => {
                 if (node.hexes.some(h => h.id === hex.id)) {
@@ -103,7 +116,34 @@ export class CatanEngine {
             });
         });
     }
-    return { total, harvests, isRobber: total === 7 };
+    return { total, harvests, isRobber: total === 7, toDiscard };
+  }
+
+  public discardResources(playerId: string, resources: Partial<Record<ResourceType, number>>): boolean {
+      if (this.state !== GameState.DISCARDING) return false;
+      const p = this.players.find(p => p.id === playerId);
+      if (!p) return false;
+
+      const totalToDiscard = Math.floor(this.getPlayerResourceCount(playerId) / 2);
+      const givenCount = Object.values(resources).reduce((a, b) => a + (b || 0), 0);
+      if (givenCount !== totalToDiscard) return false;
+
+      //Vérifier si le joueur a bien ces ressources
+      for (const [res, qty] of Object.entries(resources)) {
+          if (p.resources[res as ResourceType] < (qty || 0)) return false;
+      }
+
+      //appliquer la défausse
+      for (const [res, qty] of Object.entries(resources)) {
+          p.resources[res as ResourceType] -= (qty || 0);
+      }
+
+      //vérifier si d'autres joueurs doivent défausser
+      const stillNeeding = this.players.filter(pl => this.getPlayerResourceCount(pl.id) > 7);
+      if (stillNeeding.length === 0) {
+          this.state = GameState.ROBBER_MOVE;
+      }
+      return true;
   }
 
   public tradeWithBank(playerId: string, give: ResourceType, receive: ResourceType): boolean {
