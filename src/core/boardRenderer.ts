@@ -82,14 +82,6 @@ export function renderBoardEmoji(state: GameState): string {
   return lines.join("\n");
 }
 
-// ============================================================
-// CONSTRUCTION DE L'EMBED DISCORD
-// ============================================================
-
-/**
- * Construit l'embed Discord complet représentant l'état courant de la partie :
- * plateau, phase de jeu, résultat des dés, et liste des joueurs avec leurs points.
- */
 export function buildGameEmbed(state: GameState): EmbedBuilder {
   // Récupère le joueur dont c'est le tour à partir de l'index courant
   const currentPlayer = state.players[state.currentPlayerIndex];

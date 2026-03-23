@@ -26,10 +26,10 @@ export const startCommand = {
         },
 
         // Valeur intiale de 0
-        devCards: { knights: 0, victoryPoints: 0, special: [] },
+        devCards: [],
 
         // Reçoit une couleur, censé afficher toutes les couleurs au départ, initialisation juste avec le bleu.
-        color: 'BLUE',
+        color: RED ,
 
         // Stock de pièces disponibles à 0 au début
         stock: { roads: 0, settlements: 0, cities: 0 },

@@ -1,4 +1,4 @@
-﻿import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, StringSelectMenuBuilder, TextChannel, Message, EmbedBuilder } from "discord.js";
+﻿import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, StringSelectMenuBuilder, TextChannel, Message, EmbedBuilder, DEPRECATION_WARNING_PREFIX } from "discord.js";
 import { config } from "dotenv";
 import { CatanEngine } from "./CatanEngine.js";
 import { MapRenderer } from "./MapRenderer.js";
@@ -22,6 +22,14 @@ const commands = [
   new SlashCommandBuilder().setName("map").setDescription("Afficher le plateau"),
   new SlashCommandBuilder().setName("finish").setDescription("Terminer la session"),
 ];
+
+async function sendTurnDM(player : any) {
+try {
+      const user = await client.users.fetch(player.id);
+
+      await user.send("🎲 C'est ton tour sur Catane !");
+} catch (e) {}
+}
 
 async function updateBoard(interaction?: any, logMsg: string = "") {
     if (!currentGame) return;
@@ -126,7 +134,7 @@ client.on("interactionCreate", async (i) => {
                 const s = new StringSelectMenuBuilder().setCustomId('trade_give').addOptions(Object.values(ResourceType).filter(r => r !== ResourceType.DESERT).map(r => ({ label: r, value: r })));
                 await i.reply({ content: "🤝 Donner 4 ?", components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
-            if (i.customId === "end_turn") { currentGame.nextTurn(); await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
+            if (i.customId === "end_turn") { currentGame.nextTurn(); await sendTurnDM(currentGame.currentPlayer);  await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
         }
         if (i.isStringSelectMenu()) {
             if (i.customId === "select_spot") {
