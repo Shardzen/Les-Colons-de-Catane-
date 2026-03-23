@@ -41,7 +41,7 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
         if (CHANNELS.PLATEAU) {
             const pc = client.channels.cache.get(CHANNELS.PLATEAU) as TextChannel;
             if (pc) {
-                const content = `🗺️ **Plateau** | Tour de <@${p.id}> | <t:${Math.floor(Date.now()/1000)}:R>`;
+                const content = `🗺️ **Plateau** | Tour en cours> | <t:${Math.floor(Date.now()/1000)}:R>`;
                 if (boardMessage) { try { await boardMessage.edit({ content, files: [attachment] }); } catch (e) { boardMessage = await pc.send({ content, files: [attachment] }); } }
                 else boardMessage = await pc.send({ content, files: [attachment] });
             }
@@ -69,14 +69,11 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
             else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Placer Route').setStyle(ButtonStyle.Success));
         }
 
-        const msg = currentGame.state === GameState.FINISHED ? `🏆 Fin !` : `🎮 Tour de <@${p.id}> (${currentGame.state})`;
+        const msg = currentGame.state === GameState.FINISHED ? `🏆 Fin !` : `🎮 Tour en cours (${currentGame.state})`;
         if (interaction && interaction.isRepliable()) {
             if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [row], files: [] });
-            else await interaction.reply({ content: msg, components: [row] });
-        } else if (CHANNELS.COMMERCE) {
-            const c = client.channels.cache.get(CHANNELS.COMMERCE) as TextChannel;
-            if (c) await c.send({ content: msg, components: [row] });
-        }
+            else await interaction.reply({ content: msg, components: [row], ephemeral: true });
+        } 
     } catch (e) {}
 }
 
