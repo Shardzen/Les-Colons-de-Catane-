@@ -9,7 +9,6 @@ export class MapRenderer {
     const ctx = canvas.getContext('2d');
     const offsetX = width / 2, offsetY = height / 2, HEX_SIZE = 50;
 
-    // Fond Eau
     ctx.fillStyle = '#4CA8E0';
     ctx.fillRect(0, 0, width, height);
 
@@ -25,7 +24,6 @@ export class MapRenderer {
       }
     };
 
-    // Dessin des cases
     for (const hex of engine.map) {
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
@@ -50,7 +48,6 @@ export class MapRenderer {
       }
     }
 
-    // Dessin des Routes
     engine.edges.forEach((edge, id) => {
         const ownerId = engine.roads.get(id);
         if (ownerId) {
@@ -61,7 +58,6 @@ export class MapRenderer {
         }
     });
 
-    // Dessin des Bâtiments (Colonie = Cercle, Ville = Carré)
     engine.settlements.forEach((b, nodeId) => {
         const node = engine.nodes.get(nodeId)!;
         const owner = engine.players.find(p => p.id === b.playerId)!;
@@ -78,7 +74,6 @@ export class MapRenderer {
   }
 
   public static async renderInteractiveMap(engine: CatanEngine, validSpots: {id: string, label: string}[], isNode: boolean): Promise<Buffer> {
-     // Copie simplifiée pour l'interactif (même logique de dessin)
      const buffer = await this.renderMapToBuffer(engine);
      const canvas = createCanvas(800, 800);
      const ctx = canvas.getContext('2d');

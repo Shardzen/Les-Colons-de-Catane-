@@ -1,7 +1,6 @@
 import { GameState, Tile, TerrainType, PlayerColor } from "./types.js";
 import { EmbedBuilder } from "discord.js";
 
-// --- Affiche les EMOJIS surt le plateau ---   
 
 const TERRAIN_EMOJI: Record<TerrainType, string> = {
   WOOD:   "🌲",
@@ -34,7 +33,6 @@ const PHASE_LABEL: Record<string, string> = {
   DISCARDING:  "🗑️ Défausse des ressources"
 };
 
-// --- BOARD RENDERER ---
 
 export function renderBoardEmoji(state: GameState): string {
   const rows: Map<number, Tile[]> = new Map();
