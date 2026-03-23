@@ -13,26 +13,24 @@ export const joinCommand = {
     // Récupère l'utilisateur Discord qui a déclenché la commande
     const user = interaction.user;
 
-    // Joueur analysé par les données du serveur Discord
+    
     const player: Player = {
-        id: user.id,               // Identifiant unique Discord de l'utilisateur
-        username: user.username,   // Nom affiché dans Discord
+        id: user.id,               
+        username: user.username,   
         
-        // Chaque valeur pour chaque couleur, chaque valeur selon un tableau.
-        color: PlayerColor["BLUE", "RED"],
+        color: PlayerColor,
 
-        // Ressources : initialisées à 0 (bois, argile, mouton, blé, minerai).
+       
         resources: {
             'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0
         },
 
-        // Cartes de développement initiales : valeurs initialisées à 0
-        devCards: { knights: 0, victoryPoints: 0, special: [] },
+        
+        devCards: [],
 
-        // Valeurs initialisées à 0 car au départ il n'y a aucun stock disponible
+    
         stock: { roads: 0, settlements: 0, cities: 0 },
 
-        // Points de victoire de départ
         victoryPoints: 0
     };
 
@@ -46,20 +44,20 @@ export const joinCommand = {
         // Construit la liste des noms de joueurs séparés par des virgules
         const playerList = game?.players.map(p => p.username).join(', ');
 
-        // Construit l'embed de confirmation visible par tous dans le salon
+    
         const embed = new EmbedBuilder()
             .setTitle("Les Colons de Catane - Lobby")
             .setDescription(`${user.username} a rejoint la partie !
-            Joueurs (${game?.players.length}/4) : ${playerList}`) // Affiche le nombre de joueurs et leurs noms
-            .setColor(0x00FF00); // Vert : confirmation visuelle que le joueur a bien rejoint
+            Joueurs (${game?.players.length}/4) : ${playerList}`) 
+            .setColor(0x00FF00); 
 
-        // Affiche une réponse dans le salon
+        
         await interaction.reply({ embeds: [embed] });
     } else {
-        // Si partie déjà commencée
+       
         await interaction.reply({ 
             content: "Impossible de rejoindre la partie. Soit elle a déjà commencé, soit elle est complète, soit vous n'avez pas de lobby ouvert dans ce salon.", 
-            ephemeral: true  // true = condition vraie pour afficher message à l'utilisateur
+            ephemeral: true  
         });
     }
 
