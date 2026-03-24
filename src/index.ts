@@ -32,6 +32,15 @@ try {
 } catch (e) { console.log("Erreur DM:", e); }
 }
 
+async function sendWaitDM(player: any) {
+    try {
+        const user = await client.users.fetch(player.id);
+        await user.send("⏳ Ce n'est pas encore ton tour...");
+    } catch (e) {}
+}
+
+
+
 async function updateBoard(interaction?: any, logMsg: string = "") {
     if (!currentGame) return;
     try {
@@ -71,7 +80,7 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
         await sendTurnDM(currentGame.currentPlayer, row, "🎲 C'est ton tour");
         currentGame.players.forEach(async (player) => {
     if (player.id !== currentGame!.currentPlayer.id) {
-        await sendTurnDM(player, row, "⏳ Ce n'est pas encore ton tour...");
+        await sendWaitDM(player);
     }
 });
         const msg = currentGame.state === GameState.FINISHED ? `🏆 Fin !` : `🎮 Tour en cours (${currentGame.state})`;
