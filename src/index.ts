@@ -18,7 +18,7 @@ const commands = [
   new SlashCommandBuilder().setName("join").setDescription("Rejoindre le lobby"),
   new SlashCommandBuilder().setName("begin").setDescription("Lancer la partie"),
   new SlashCommandBuilder().setName("rules").setDescription("Afficher les règles détaillées"),
-  new SlashCommandBuilder().setName("inventory").setDescription("Voir tes ressources"),
+  new SlashCommandBuilder().setName("cards").setDescription("Voir tes ressources"),
   new SlashCommandBuilder().setName("map").setDescription("Afficher le plateau"),
   new SlashCommandBuilder().setName("finish").setDescription("Terminer la session"),
 ];
@@ -104,7 +104,7 @@ client.on("interactionCreate", async (i) => {
             if (i.commandName === "start") { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: "#FF0000" }]; await i.reply("🆕 Lobby ouvert ! /join pour rejoindre."); }
             if (i.commandName === "join") { if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: "Erreur lobby", ephemeral: true }); const c = ["#0000FF", "#00FF00", "#FFA500"]; lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: c[lobbyPlayers.length-1] }); await i.reply(`✅ <@${i.user.id}> a rejoint ! (${lobbyPlayers.length}/4)`); }
             if (i.commandName === "begin") { if (lobbyPlayers.length < 2) return i.reply("2 joueurs min."); currentGame = new CatanEngine(lobbyPlayers); boardMessage = null; await updateBoard(i, "La partie commence !"); }
-            if (i.commandName === "inventory") { if (!currentGame) return i.reply("Pas de partie."); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply("Pas dedans."); i.reply({ content: `🎒 Bois:${p.resources["Bois"]} Argile:${p.resources["Argile"]} Laine:${p.resources["Laine"]} Blé:${p.resources["Blé"]} Minerai:${p.resources["Minerai"]} | PV:${p.victoryPoints}`, ephemeral: true }); }
+            if (i.commandName === "cards") { if (!currentGame) return i.reply("Pas de partie."); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply("Pas dedans."); i.reply({ content: `🎒 Bois:${p.resources["Bois"]} Argile:${p.resources["Argile"]} Laine:${p.resources["Laine"]} Blé:${p.resources["Blé"]} Minerai:${p.resources["Minerai"]} | PV:${p.victoryPoints}`, ephemeral: true }); }
             if (i.commandName === "map") await updateBoard(i);
             if (i.commandName === "rules") {
                 const embed = new EmbedBuilder()
