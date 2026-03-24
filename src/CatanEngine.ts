@@ -153,7 +153,7 @@ export class CatanEngine {
       return true;
   }
  
-  // Fonction LongestRoad qui va attribuer les IDs des rouutes du joueur 
+  // Fonction LongestRoad qui va attribuer les IDs des routes du joueur 
   public calculateLongestRoad(playerId: string): number {
     const playerEdges = Array.from(this.roads.entries())
     .filter(([edgeId, owner]) => owner === playerId)
