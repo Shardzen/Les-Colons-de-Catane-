@@ -159,7 +159,7 @@ export class CatanEngine {
     const playerEdges = Array.from(this.roads.entries())
     let MaxLength = 0;
     for (const edgeId of playerEdges) {
-    const longueur = 0; // on remplacera par le DFS après
+    const length = 0;
     if (length > MaxLength) {
         MaxLength = length;
     }

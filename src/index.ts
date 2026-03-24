@@ -9,6 +9,8 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 let currentGame: CatanEngine | null = null, lobbyPlayers: any[] = [], pendingActions = new Map<string, any>();
 const CHANNELS = { PLATEAU: process.env.CHANNEL_PLATEAU, JOURNAL: process.env.CHANNEL_JOURNAL, COMMERCE: process.env.CHANNEL_COMMERCE, LOGS: process.env.CHANNEL_LOGS };
 let boardMessage: Message | null = null;
+let dmMessages = new Map<string, Message>();
+
 
 function getLabel(i: number) { let l = ""; while (i >= 0) { l = String.fromCharCode(65 + (i % 26)) + l; i = Math.floor(i / 26) - 1; } return l; }
 async function clearChannel(id: string | undefined) { if (!id) return; const c = client.channels.cache.get(id) as TextChannel; if (c) { try { const f = await c.messages.fetch({ limit: 100 }); await c.bulkDelete(f); } catch (e) {} } }
@@ -135,35 +137,35 @@ client.on("interactionCreate", async (i) => {
                   return i.reply({ content: "Pas ton tour !", ephemeral: true });
             if (i.customId === "roll_dice") { const res = currentGame.rollDice(); await i.deferUpdate(); await i.editReply({ components: [] }); await updateBoard(i, res ? `<@${i.user.id}> a fait un **${res.total}**.` : `<@${i.user.id}> a lancé les dés.`); }
             if (i.customId === "setup_settlement" || i.customId === "build_settlement") {
+  
                 const spots = currentGame.getPlaceableNodes(i.user.id).map((n, j) => ({ id: n.id, label: getLabel(j) }));
                 pendingActions.set(i.user.id, { type: 'settlement', spots });
                 const b = await MapRenderer.renderInteractiveMap(currentGame, spots.slice(0, 25), true);
                 const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: `Pos ${s.label}`, value: s.id })));
-                await i.reply({ content: "🏠 Où ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+                await i.update({ content: "🏠 Où ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
             if (i.customId === "setup_road" || i.customId === "build_road") {
                 const spots = currentGame.getPlaceableEdges(i.user.id).map((e, j) => ({ id: e.id, label: getLabel(j) }));
                 pendingActions.set(i.user.id, { type: 'road', spots });
                 const b = await MapRenderer.renderInteractiveMap(currentGame, spots.slice(0, 25), false);
                 const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: `Pos ${s.label}`, value: s.id })));
-                await i.reply({ content: "🛣️ Où ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+                await i.update({ content: "🛣️ Où ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
             if (i.customId === "build_city") {
                 const spots = currentGame.getUpgradableSettlements(i.user.id).map((n, j) => ({ id: n.id, label: getLabel(j) }));
                 pendingActions.set(i.user.id, { type: 'city', spots });
                 const b = await MapRenderer.renderInteractiveMap(currentGame, spots.slice(0, 25), true);
                 const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: `Pos ${s.label}`, value: s.id })));
-                await i.reply({ content: "🏙️ Améliorer ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+                await i.update({ content: "🏙️ Améliorer ?", files: [new AttachmentBuilder(b, { name: 'catan.png' })], components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
              if (i.customId === "move_robber") {
               currentGame.state = GameState.PLAYING;
-              await i.deferUpdate();
-              await i.editReply({ components: [] });
+
               await updateBoard(i, "Le voleur a été déplacé");
             }
             if (i.customId === "trade_bank") {
                 const s = new StringSelectMenuBuilder().setCustomId('trade_give').addOptions(Object.values(ResourceType).filter(r => r !== ResourceType.DESERT).map(r => ({ label: r, value: r })));
-                await i.reply({ content: "🤝 Donner 4 ?", components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
+                await i.update({ content: "🤝 Donner 4 ?", components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
             if (i.customId === "end_turn") { currentGame.nextTurn(); await i.deferUpdate(); await i.editReply({ components: [] });  await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
         }
