@@ -1,4 +1,5 @@
-﻿import { ResourceType, BuildingType, Player, Hex, Building, GameState, Node, Edge } from "./types.js";    
+﻿import { kMaxLength } from "buffer";
+import { ResourceType, BuildingType, Player, Hex, Building, GameState, Node, Edge } from "./types.js";    
 
 export class CatanEngine {
   public map: Hex[] = [];
@@ -156,9 +157,14 @@ export class CatanEngine {
   // Fonction LongestRoad qui va attribuer les IDs des routes du joueur 
   public calculateLongestRoad(playerId: string): number {
     const playerEdges = Array.from(this.roads.entries())
-    .filter(([edgeId, owner]) => owner === playerId)
-    .map(([edgeId]) => edgeId);
-    return 0;
+    let MaxLength = 0;
+    for (const edgeId of playerEdges) {
+    const longueur = 0; // on remplacera par le DFS après
+    if (length > MaxLength) {
+        MaxLength = length;
+    }
+}
+return MaxLength;
 }
 
   public buildSettlement(playerId: string, nodeId: string): boolean {
