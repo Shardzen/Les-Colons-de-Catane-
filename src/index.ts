@@ -133,7 +133,7 @@ client.on("interactionCreate", async (i) => {
                   return i.reply({ content: "Pas de partie", ephemeral: true });
                   if (i.user.id !== currentGame.currentPlayer.id && !pendingActions.has(i.user.id))
                   return i.reply({ content: "Pas ton tour !", ephemeral: true });
-            if (i.customId === "roll_dice") { const res = currentGame.rollDice(); await i.deferUpdate(); await updateBoard(i, res ? `<@${i.user.id}> a fait un **${res.total}**.` : `<@${i.user.id}> a lancé les dés.`); }
+            if (i.customId === "roll_dice") { const res = currentGame.rollDice(); await i.deferUpdate(); await i.editReply({ components: [] }); await updateBoard(i, res ? `<@${i.user.id}> a fait un **${res.total}**.` : `<@${i.user.id}> a lancé les dés.`); }
             if (i.customId === "setup_settlement" || i.customId === "build_settlement") {
                 const spots = currentGame.getPlaceableNodes(i.user.id).map((n, j) => ({ id: n.id, label: getLabel(j) }));
                 pendingActions.set(i.user.id, { type: 'settlement', spots });
@@ -158,13 +158,14 @@ client.on("interactionCreate", async (i) => {
              if (i.customId === "move_robber") {
               currentGame.state = GameState.PLAYING;
               await i.deferUpdate();
+              await i.editReply({ components: [] });
               await updateBoard(i, "Le voleur a été déplacé");
             }
             if (i.customId === "trade_bank") {
                 const s = new StringSelectMenuBuilder().setCustomId('trade_give').addOptions(Object.values(ResourceType).filter(r => r !== ResourceType.DESERT).map(r => ({ label: r, value: r })));
                 await i.reply({ content: "🤝 Donner 4 ?", components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
-            if (i.customId === "end_turn") { currentGame.nextTurn(); await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
+            if (i.customId === "end_turn") { currentGame.nextTurn(); await i.deferUpdate(); await i.editReply({ components: [] });  await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
         }
         if (i.isStringSelectMenu()) {
       const action = pendingActions.get(i.user.id);
