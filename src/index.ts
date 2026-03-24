@@ -23,12 +23,12 @@ const commands = [
   new SlashCommandBuilder().setName("finish").setDescription("Terminer la session"),
 ];
 
-async function sendTurnDM(player : any, row : any) {
+async function sendTurnDM(player : any, row : any, message : string) {
       console.log("sendTurnDM appelée pour", player.id);
 try {
       const user = await client.users.fetch(player.id);
 
-      await user.send({ content: "🎲 C'est ton tour !", components: [row] });
+      await user.send({ content: message, components: [row] });
 } catch (e) { console.log("Erreur DM:", e); }
 }
 
@@ -68,7 +68,12 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
             if (currentGame.setupStep === "SETTLEMENT") row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Placer Colonie').setStyle(ButtonStyle.Success));
             else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Placer Route').setStyle(ButtonStyle.Success));
         }
-        await sendTurnDM(currentGame.currentPlayer, row);
+        await sendTurnDM(currentGame.currentPlayer, row, "🎲 C'est ton tour");
+        currentGame.players.forEach(async (player) => {
+    if (player.id !== currentGame!.currentPlayer.id) {
+        await sendTurnDM(player, row, "⏳ Ce n'est pas encore ton tour...");
+    }
+});
         const msg = currentGame.state === GameState.FINISHED ? `🏆 Fin !` : `🎮 Tour en cours (${currentGame.state})`;
         if (interaction && interaction.isRepliable()) {
             if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [row], files: [] });
@@ -150,7 +155,7 @@ client.on("interactionCreate", async (i) => {
                 const s = new StringSelectMenuBuilder().setCustomId('trade_give').addOptions(Object.values(ResourceType).filter(r => r !== ResourceType.DESERT).map(r => ({ label: r, value: r })));
                 await i.reply({ content: "🤝 Donner 4 ?", components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
-            if (i.customId === "end_turn") { currentGame.nextTurn();  await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
+            if (i.customId === "end_turn") { currentGame.nextTurn(); await i.deferUpdate(); await updateBoard(i, `<@${i.user.id}> a fini son tour.`); }
         }
         if (i.isStringSelectMenu()) {
       const action = pendingActions.get(i.user.id);
