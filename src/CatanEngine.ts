@@ -152,6 +152,14 @@ export class CatanEngine {
       p.resources[give] -= 4; p.resources[receive] += 1;
       return true;
   }
+ 
+  // Fonction LongestRoad qui va attribuer les IDs des rouutes du joueur 
+  public calculateLongestRoad(playerId: string): number {
+    const playerEdges = Array.from(this.roads.entries())
+    .filter(([edgeId, owner]) => owner === playerId)
+    .map(([edgeId]) => edgeId);
+    return 0;
+}
 
   public buildSettlement(playerId: string, nodeId: string): boolean {
     if (this.state.startsWith("SETUP") && this.setupStep !== "SETTLEMENT") return false;
