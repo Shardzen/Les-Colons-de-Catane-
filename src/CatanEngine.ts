@@ -157,8 +157,18 @@ export class CatanEngine {
   // Fonction LongestRoad qui va attribuer les IDs des routes du joueur 
   public calculateLongestRoad(playerId: string): number {
     const playerEdges = Array.from(this.roads.entries())
+    .filter(([edgeId, owner]) => owner === playerId)
+    .map(([edgeId]) => edgeId);
+    let MaxLength = 0;   
+    const dfs = (edgeId: string, visited: Set<string>): number => {
+    visited.add(edgeId);
+    const edge = this.edges.get(edgeId)!;
     let MaxLength = 0;
-    for (const edgeId of playerEdges) {
+    for (const otherEdge of Array.from(this.edges.values())) {
+
+        
+}
+
     const length = 0;
     if (length > MaxLength) {
         MaxLength = length;
@@ -166,6 +176,7 @@ export class CatanEngine {
 }
 return MaxLength;
 }
+
 
   public buildSettlement(playerId: string, nodeId: string): boolean {
     if (this.state.startsWith("SETUP") && this.setupStep !== "SETTLEMENT") return false;
