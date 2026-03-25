@@ -186,7 +186,12 @@ client.on("interactionCreate", async (i) => {
               const longestRoad = currentGame!.calculateLongestRoad(i.user.id);
               if (longestRoad >= 5) {
                 const player = currentGame!.players.find(p => p.id === i.user.id);
+                   if (longestRoadOwner && longestRoadOwner !== i.user.id) {
+              const previousOwner = currentGame!.players.find(p => p.id === longestRoadOwner);
+              previousOwner!.victoryPoints -= 2;
+                             }
                 player!.victoryPoints += 2;
+                longestRoadOwner = i.user.id;
               }
         }
         pendingActions.delete(i.user.id);
