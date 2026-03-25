@@ -9,7 +9,8 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 let currentGame: CatanEngine | null = null, lobbyPlayers: any[] = [], pendingActions = new Map<string, any>();
 const CHANNELS = { PLATEAU: process.env.CHANNEL_PLATEAU, JOURNAL: process.env.CHANNEL_JOURNAL, COMMERCE: process.env.CHANNEL_COMMERCE, LOGS: process.env.CHANNEL_LOGS };
 let boardMessage: Message | null = null;
-let dmMessages = new Map<string, Message>();
+let longestRoadOwner: string | null = null;
+
 
 
 function getLabel(i: number) { let l = ""; while (i >= 0) { l = String.fromCharCode(65 + (i % 26)) + l; i = Math.floor(i / 26) - 1; } return l; }
@@ -67,7 +68,6 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
                     new ButtonBuilder().setCustomId('build_settlement').setLabel('🏠 Colonie').setStyle(ButtonStyle.Success),
                     new ButtonBuilder().setCustomId('build_road').setLabel('🛣️ Route').setStyle(ButtonStyle.Success),
                     new ButtonBuilder().setCustomId('build_city').setLabel('🏙️ Ville').setStyle(ButtonStyle.Success),
-                    new ButtonBuilder().setCustomId('move_robber').setLabel('🦹Voleur').setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder().setCustomId('trade_bank').setLabel('🤝 Commerce').setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder().setCustomId('end_turn').setLabel('⭐ Fin').setStyle(ButtonStyle.Secondary)
                 );
