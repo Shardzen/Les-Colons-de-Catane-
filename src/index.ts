@@ -133,7 +133,18 @@ client.on("interactionCreate", async (i) => {
     
                 await i.reply({ embeds: [embed] }); 
                                         }
-            if (i.commandName === "begin") { if (lobbyPlayers.length < 2) return i.reply("2 joueurs min."); currentGame = new CatanEngine(lobbyPlayers); boardMessage = null; await updateBoard(i, "La partie commence !"); }
+            if (i.commandName === "begin") { if (lobbyPlayers.length < 2) return i.reply("2 joueurs min.")
+                 const embed = new EmbedBuilder()
+                 .setTitle("⚔️ La partie commence !")
+                .setDescription("La partie a commencé")
+                .setColor("#E67E22");
+    
+                await i.reply({ embeds: [embed] }); 
+                currentGame = new CatanEngine(lobbyPlayers); 
+                boardMessage = null; 
+                await updateBoard(i, "La partie commence !");
+            }
+
             if (i.commandName === "cards") { if (!currentGame) return i.reply("Pas de partie."); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply("Pas dedans."); i.reply({ content: `🎒 Bois:${p.resources["Bois"]} Argile:${p.resources["Argile"]} Laine:${p.resources["Laine"]} Blé:${p.resources["Blé"]} Minerai:${p.resources["Minerai"]} | PV:${p.victoryPoints}`, ephemeral: true }); }
             if (i.commandName === "map") await updateBoard(i);
             if (i.commandName === "rules") {
