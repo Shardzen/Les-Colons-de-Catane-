@@ -183,6 +183,11 @@ client.on("interactionCreate", async (i) => {
         } else if (action.type === 'road' && currentGame!.buildRoad(i.user.id, i.values[0])) {
               await i.update({ content: "✅ OK", components: [], files: [] });
               await updateBoard(null, `<@${i.user.id}> a posé une Route.`);
+              const longestRoad = currentGame!.calculateLongestRoad(i.user.id);
+              if (longestRoad >= 5) {
+                const player = currentGame!.players.find(p => p.id === i.user.id);
+                player!.victoryPoints += 2;
+              }
         }
         pendingActions.delete(i.user.id);
         return;
