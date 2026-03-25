@@ -107,7 +107,18 @@ client.on("interactionCreate", async (i) => {
     try {
         if (i.isChatInputCommand()) {
             if (i.commandName === "finish") { await i.reply({ content: "🧼 Nettoyage...", ephemeral: true }); await clearChannel(CHANNELS.PLATEAU); await clearChannel(CHANNELS.JOURNAL); await clearChannel(CHANNELS.COMMERCE); currentGame = null; lobbyPlayers = []; boardMessage = null; return i.followUp({ content: "🏁 Terminé !" }); }
-            if (i.commandName === "start") { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: "#FF0000" }]; await i.reply("🆕 Lobby ouvert ! /join pour rejoindre."); }
+            if (i.commandName === "start") {
+                if (i.commandName === "start") { 
+                lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: "#FF0000" }]; 
+    
+                const embed = new EmbedBuilder()
+                 .setTitle("🏝️ Île de Catane")
+                 .setDescription("🆕 Lobby ouvert ! Utilisez `/join` pour rejoindre.")
+                 .setColor("#FF0000");
+    
+                await i.reply({ embeds: [embed] }); 
+            } 
+                }
             if (i.commandName === "join") { 
                 if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) 
                 return i.reply({ content: "Erreur lobby", ephemeral: true }); 
