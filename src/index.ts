@@ -91,7 +91,7 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
 });
         const msg = currentGame.state === GameState.FINISHED ? `🏆 Fin !` : `🎮 Tour en cours (${currentGame.state})`;
         if (interaction && interaction.isRepliable()) {
-            if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [row], files: [] });
+            if (interaction.replied || interaction.deferred) await interaction.followUp({ content: msg, components: [row], files: [], ephemeral : true });
             else await interaction.reply({ content: msg, components: [row], ephemeral: true });
         } 
     } catch (e) {}
