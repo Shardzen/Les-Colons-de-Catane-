@@ -28,10 +28,14 @@ const commands = [
 
 async function sendTurnDM(player : any, row : any, message : string) {
       console.log("sendTurnDM appelée pour", player.id);
+                const embed = new EmbedBuilder()
+                 .setTitle("🎲 C'est ton tour !")
+                .setDescription(message)
+                .setColor(player.color);
 try {
       const user = await client.users.fetch(player.id);
 
-      await user.send({ content: message, components: [row] });
+      await user.send({ embeds : [embed], components: [row] });
 } catch (e) { console.log("Erreur DM:", e); }
 }
 
@@ -79,7 +83,7 @@ async function updateBoard(interaction?: any, logMsg: string = "") {
             if (currentGame.setupStep === "SETTLEMENT") row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Placer Colonie').setStyle(ButtonStyle.Success));
             else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Placer Route').setStyle(ButtonStyle.Success));
         }
-        await sendTurnDM(currentGame.currentPlayer, row, "🎲 C'est ton tour");
+        await sendTurnDM(currentGame.currentPlayer, row, "Clique sur le bouton");
         currentGame.players.forEach(async (player) => {
     if (player.id !== currentGame!.currentPlayer.id) {
         await sendWaitDM(player);
@@ -104,7 +108,20 @@ client.on("interactionCreate", async (i) => {
         if (i.isChatInputCommand()) {
             if (i.commandName === "finish") { await i.reply({ content: "🧼 Nettoyage...", ephemeral: true }); await clearChannel(CHANNELS.PLATEAU); await clearChannel(CHANNELS.JOURNAL); await clearChannel(CHANNELS.COMMERCE); currentGame = null; lobbyPlayers = []; boardMessage = null; return i.followUp({ content: "🏁 Terminé !" }); }
             if (i.commandName === "start") { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: "#FF0000" }]; await i.reply("🆕 Lobby ouvert ! /join pour rejoindre."); }
-            if (i.commandName === "join") { if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: "Erreur lobby", ephemeral: true }); const c = ["#0000FF", "#00FF00", "#FFA500"]; lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: c[lobbyPlayers.length-1] }); await i.reply(`✅ <@${i.user.id}> a rejoint ! (${lobbyPlayers.length}/4)`); }
+            if (i.commandName === "join") { 
+                if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) 
+                return i.reply({ content: "Erreur lobby", ephemeral: true }); 
+    
+                const c = ["#0000FF", "#00FF00", "#FFA500"]; 
+                lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: c[lobbyPlayers.length-1] }); 
+    
+                const embed = new EmbedBuilder()
+                 .setTitle("🏰 Nouveau Colon !")
+                .setDescription(`✅ <@${i.user.id}> a rejoint ! (${lobbyPlayers.length}/4)`)
+                .setColor(c[lobbyPlayers.length-2] as any);
+    
+                await i.reply({ embeds: [embed] }); 
+                                        }
             if (i.commandName === "begin") { if (lobbyPlayers.length < 2) return i.reply("2 joueurs min."); currentGame = new CatanEngine(lobbyPlayers); boardMessage = null; await updateBoard(i, "La partie commence !"); }
             if (i.commandName === "cards") { if (!currentGame) return i.reply("Pas de partie."); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply("Pas dedans."); i.reply({ content: `🎒 Bois:${p.resources["Bois"]} Argile:${p.resources["Argile"]} Laine:${p.resources["Laine"]} Blé:${p.resources["Blé"]} Minerai:${p.resources["Minerai"]} | PV:${p.victoryPoints}`, ephemeral: true }); }
             if (i.commandName === "map") await updateBoard(i);
