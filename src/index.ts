@@ -128,8 +128,10 @@ client.on("interactionCreate", async (i) => {
     
                 const embed = new EmbedBuilder()
                  .setTitle("🏰 Nouveau Colon !")
-                .setDescription(`✅ <@${i.user.id}> a rejoint ! (${lobbyPlayers.length}/4)`)
-                .setColor(c[lobbyPlayers.length-2] as any);
+                .setDescription(`**${i.user.username}** a rejoint l'île de Catane !\n\n**Joueurs** (${lobbyPlayers.length}/4) :\n${lobbyPlayers.map(p => `• ${p.username}`).join('\n')}`)
+                .setThumbnail(i.user.displayAvatarURL())
+                .setColor(c[lobbyPlayers.length-2] as any)
+                .setFooter({ text: "Tapez /begin pour lancer la partie !" });
     
                 await i.reply({ embeds: [embed] }); 
                                         }
