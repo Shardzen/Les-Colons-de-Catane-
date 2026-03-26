@@ -170,7 +170,7 @@ client.on("interactionCreate", async (i) => {
                     .setDescription("Si vous faites un 7, personne ne reçoit de ressources. Le joueur actif déplace le Voleur pour bloquer une case et voler une ressource à un adversaire.")
                     .setColor(0xE67E22)
                     const embed4 = new EmbedBuilder()
-                    .setTitle("💡 Astuces : Les Villes rapportent double production (2 ressources au lieu d'une). \n Respectez la règle de distance : il faut toujours 2 intersections vides entre chaque colonie.")
+                    .setTitle("💡 Astuces : Les Villes rapportent double production (2 ressources au lieu d'une). \n Respectez la règle de distance :\n il faut toujours 2 intersections vides entre chaque colonie.")
                     .setFooter({ text: "Utilisez les boutons dans #commerce-public pour jouer !" });
                     const embed5 = new EmbedBuilder()
                     .setTitle("🃏 Cartes de Développement")
