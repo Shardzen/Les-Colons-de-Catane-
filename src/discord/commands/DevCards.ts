@@ -1,7 +1,7 @@
 //Fonction qui assignée pour ccréer un deck de cartes qui servira dans la partie avec implémentation ensuite d'effets spéciaux 
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
 import { GameManager } from '../../core/gameManager.js';
-import { Player, PlayerColor } from '../../core/types.js';
+import { Player, PlayerColor, DevCard } from '../../core/types.js';
 
 
 //Propre au fichier 
@@ -43,8 +43,10 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
 
 
     const deck = NewDeck();
+    const deck: DevCard[] = []
 
-    function NewDeck(): DevCard[] { 
+    function NewDeck(): DevCard[]
+     { 
         for (let i = 0; i < 14; i++) { //14 cartes chevaliers disponibles
         deck.push({
       type: "knight",
@@ -60,18 +62,58 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
             turn: 0
     });
   }
-    }
+  for (let i = 0; i < 2; i++) { //
+            deck.push({
+            type: "progress",  
+            effect: {type :"roadBuilding"},
+             played : false,
+            turn: 0
+    })
+  }
+
+  for (let i = 0; i < 2; i++) { //
+            deck.push({
+            type: "progress",  
+            effect: {type :"yearOfPlenty"},
+             played : false,
+            turn: 0
+    })
+  }
+  for (let i = 0; i < 2; i++) { //
+            deck.push({
+            type: "progress",  
+            effect: {type :"monopoly"},
+             played : false,
+            turn: 0
+    })
+  }
 
 
         // Mélange le deck 
-        function shuffle(deck: DevCard[]): DevCard[] {
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1)); // Fonction qui affiche un nombre aléatoire de 0 à 1
-  }
+         for (let i = deck.length - 1; i > 0; i--) {
+         const j = Math.floor(Math.random() * (i + 1));
+         let temp = deck [i]
+         deck [i] = deck [j]
+         deck [j] = temp
+                }
         return deck;
 }
-    const deck = shuffle(NewDeck());
-    await interaction.reply(`Deck créé avec ${deck.length} cartes`);
+        return deck;
+
+function pickCard(deck: DevCard[], player: Player) : DevCard  {
+  
+  if (deck.length === 0) {
+   throw new Error("Le deck est vide") //throw car ici programme attend DevCard
+                         } 
+      const card = deck.shift()!
+      player.devCards.push(card) 
+
+return card
+}
+
+
+        
+    await interaction.reply(`Deck créé avec ${deck.length} cartes`); 
 }
 }
 

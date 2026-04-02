@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.js';
 import { GameManager } from '../../core/gameManager.js';
-import { Player } from '../../core/types.js';
+import { Player, PlayerColor } from '../../core/types.js';
 
 export const startCommand = {
 
@@ -29,7 +29,7 @@ export const startCommand = {
         devCards: [],
 
         
-        color: RED ,
+        color: PlayerColor ,
 
   
         stock: { roads: 0, settlements: 0, cities: 0 },
