@@ -48,7 +48,7 @@ export type DevCard =
     }
   | {
       type: "progress";
-      effect: ProgressEffect[];
+      effect: ProgressEffect;
       played: boolean;
       turn: number;
     };
