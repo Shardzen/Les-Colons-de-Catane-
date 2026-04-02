@@ -41,10 +41,9 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
 
 
     const deck = NewDeck();
-    const deck: DevCard[] = []
 
-    function NewDeck(): DevCard[]
-     { 
+    function NewDeck(): DevCard[] { 
+    const deck: DevCard[] = []
         for (let i = 0; i < 14; i++) { 
         deck.push({
       type: "knight",
@@ -86,8 +85,8 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
     })
   }
 
-
-         for (let i = deck.length - 1; i > 0; i--) {
+  export function shuffle(deck: DevCard[]): DevCard[] {
+       for (let i = deck.length - 1; i > 0; i--) {
          const j = Math.floor(Math.random() * (i + 1));
          let temp = deck [i]
          deck [i] = deck [j]
@@ -95,8 +94,6 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
                 }
         return deck;
 }
-        return deck;
-
 function pickCard(deck: DevCard[], player: Player) : DevCard  {
   
   if (deck.length === 0) {
@@ -134,19 +131,19 @@ switch (card.type) {
     }
         break
 }
-
-const knightsPlayed = player.devCards.filter(c => c.type === "knight" && c.played === true).length
-
-
 return card
 }
 
+      return deck;
+
+
 
         
-    await interaction.reply(`Deck créé avec ${deck.length} cartes`); 
+   
+}
+await interaction.reply(`Deck créé avec ${deck.length} cartes`);
 }
 }
-
 
 
 

@@ -11,7 +11,6 @@
   PlayerColor,
   TerrainType
 } from "./types.js";
-
 export class GameManager {
   private state: GameState;
 
