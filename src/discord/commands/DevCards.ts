@@ -85,7 +85,7 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
     })
   }
 
-  export function shuffle(deck: DevCard[]): DevCard[] {
+  function shuffle(deck: DevCard[]): DevCard[] {
        for (let i = deck.length - 1; i > 0; i--) {
          const j = Math.floor(Math.random() * (i + 1));
          let temp = deck [i]
