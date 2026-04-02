@@ -37,13 +37,12 @@ export type ConstructionType = "ROAD" | "SETTLEMENT" | "CITY";
 export type DevCard =
   | {
       type: "knight";
-      knights: Knight[]; // Création type Knight avec tableau
       played: boolean;
       turn: number;
     }
   | {
       type: "victory";
-      victoryPoints: number; // 1 à 10
+      victoryPoints: 1;
       played: boolean;
       turn: number;
     }
@@ -53,11 +52,6 @@ export type DevCard =
       played: boolean;
       turn: number;
     };
-
-export type Knight = {
-    level: 1 | 2 | 3; // 2 chevaliers de type =/
-    active: boolean; // Affiche si on peut l'utiliser ou pas
-};
 
 export type ProgressEffect =
   | { type: "roadBuilding" } // Construire routes
