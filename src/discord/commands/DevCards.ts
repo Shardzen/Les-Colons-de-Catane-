@@ -3,8 +3,7 @@ import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from 'discord.j
 import { GameManager } from '../../core/gameManager.js';
 import { Player, PlayerColor, DevCard } from '../../core/types.js';
 
-
-//Propre au fichier 
+ 
 
 export type Player2 = Player & {color: PlayerColor | null}
 
@@ -14,10 +13,9 @@ export const DevCardsCommand = {
                 .setDescription("Affiche le deck"),
 
 
-//Utilise les memes methodes d'exécution des autres modes de jeu
+
 async execute(interaction: CommandInteraction, gameManager: GameManager) {
     
-    //Importer la classe Joueur pour affecter valeurs au(x) joueur(s)
     const user = interaction.user;
      const player: Player = {
             id: user.id,
@@ -47,14 +45,14 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
 
     function NewDeck(): DevCard[]
      { 
-        for (let i = 0; i < 14; i++) { //14 cartes chevaliers disponibles
+        for (let i = 0; i < 14; i++) { 
         deck.push({
       type: "knight",
       played : false,
       turn: 0
     });
   }
-            for (let i = 0; i < 5; i++) { //5 cartes PV
+            for (let i = 0; i < 5; i++) { 
             deck.push({
             type: "victory",
             victoryPoints: 1,
@@ -89,7 +87,6 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
   }
 
 
-        // Mélange le deck 
          for (let i = deck.length - 1; i > 0; i--) {
          const j = Math.floor(Math.random() * (i + 1));
          let temp = deck [i]
@@ -107,6 +104,39 @@ function pickCard(deck: DevCard[], player: Player) : DevCard  {
                          } 
       const card = deck.shift()!
       player.devCards.push(card) 
+
+return card
+}
+
+
+function playCard(card: DevCard, player: Player): DevCard {
+
+if (card.played === true) {
+    throw new Error("Cette carte a déjà été jouée")
+}
+
+card.played = true 
+
+switch (card.type) {
+    case "knight": // A faire dans le GamManager
+        break
+    case "victory":
+      player.victoryPoints = player.victoryPoints + 1
+        break
+    case "progress": // A faire dans le GamManager
+          switch (card.effect.type) {
+        case "roadBuilding": 
+            break
+        case "yearOfPlenty":
+            break
+        case "monopoly":
+            break
+    }
+        break
+}
+
+const knightsPlayed = player.devCards.filter(c => c.type === "knight" && c.played === true).length
+
 
 return card
 }
