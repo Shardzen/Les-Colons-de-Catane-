@@ -13,9 +13,9 @@ export class GameManager {
   public joinGame(channelId: string, user: { id: string, username: string }): { success: boolean, error?: string } {
     const lobby = this.getLobby(channelId);
     if (this.games.has(channelId)) return { success: false, error: "Partie en cours." };
-    if (lobby.find(p => p.id === user.id)) return { success: false, error: "Déjà dans le lobby." };
+    if (lobby.find(p => p.id === user.id)) return { success: false, error: "DÃ©jÃ  dans le lobby." };
     if (lobby.length >= 4) return { success: false, error: "Lobby complet." };
-    
+
     const colors = ["RED", "BLUE", "WHITE", "ORANGE"];
     lobby.push({ id: user.id, username: user.username, color: colors[lobby.length] });
     return { success: true };
