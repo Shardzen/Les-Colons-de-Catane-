@@ -1,4 +1,6 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+﻿﻿import { SlashCommandBuilder, CommandInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { GameManager } from '../../core/gameManager.js';
+import { renderBoardEmoji } from '../../core/boardRenderer.js';
 
 export const beginCommand = {
   data: new SlashCommandBuilder()
