@@ -1,6 +1,16 @@
-import { CatanEngine } from "../CatanEngine.js";
-import { GameState } from "../types.js";
-
+import {
+  GameState,
+  GameAction,
+  GamePhase,
+  ActionResponse,
+  Player,
+  Tile,
+  HexCoord,
+  ResourceType,
+  ProductionNumber,
+  PlayerColor,
+  TerrainType
+} from "./types.js";
 export class GameManager {
   private games = new Map<string, CatanEngine>();
   private lobbys = new Map<string, any[]>();
@@ -45,8 +55,8 @@ export class GameManager {
     return initialState;
   }
 
-  
-  
+
+
   public joinGame(channelId: string, player: { id: string; username: string; color: PlayerColor }): ActionResponse {
   if (this.state.players.find(p => p.id === player.id)) {
     return { success: false, state: this.state, error: { code: "ALREADY_JOINED", details: "Ce joueur a déjà rejoint la partie." } };
@@ -69,7 +79,7 @@ export class GameManager {
   this.state.players.push(newPlayer);
   return { success: true, state: this.state, message: `${player.username} a rejoint la partie.` };
 }
-  
+
 
   public createGame(channelId: string, player: Player): ActionResponse {
   if (this.state.players.length > 0) {
@@ -89,7 +99,7 @@ export class GameManager {
   this.state.players.push(newPlayer);
   return { success: true, state: this.state, message: `${player.username} a créé une nouvelle partie.` };
 }
-  
+
 
   public execute(action: GameAction): ActionResponse {
     try {
@@ -123,26 +133,26 @@ export class GameManager {
 
   public joinGame(channelId: string, user: { id: string, username: string }): { success: boolean, error?: string } {
     const lobby = this.getLobby(channelId);
-    
+
     if (this.games.has(channelId)) {
       return { success: false, error: "Une partie est déjà en cours dans ce salon." };
     }
-    
+
     if (lobby.find(p => p.id === user.id)) {
       return { success: false, error: "Tu as déjà rejoint ce lobby." };
     }
-    
+
     if (lobby.length >= 4) {
       return { success: false, error: "Le lobby est complet (4 joueurs max)." };
     }
 
     const colors = ["#FF0000", "#0000FF", "#00FF00", "#FFA500"];
-    lobby.push({ 
-      id: user.id, 
-      username: user.username, 
-      color: colors[lobby.length] 
+    lobby.push({
+      id: user.id,
+      username: user.username,
+      color: colors[lobby.length]
     });
-    
+
     return { success: true };
   }
 

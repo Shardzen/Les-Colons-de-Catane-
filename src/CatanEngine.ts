@@ -1,4 +1,5 @@
-﻿import { ResourceType, BuildingType, Player, Hex, Building, GameState, Node, Edge } from "./types.js";    
+﻿import { kMaxLength } from "buffer";
+import { ResourceType, BuildingType, Player, Hex, Building, GameState, Node, Edge } from "./types.js";    
 
 export class CatanEngine {
   public map: Hex[] = [];
@@ -164,6 +165,42 @@ export class CatanEngine {
       p.resources[give] -= 4; p.resources[receive] += 1;
       return true;
   }
+ 
+  // Fonction LongestRoad qui va attribuer les IDs des routes du joueur 
+  public calculateLongestRoad(playerId: string): number {
+    const playerEdges = Array.from(this.roads.entries())
+    .filter(([edgeId, owner]) => owner === playerId)
+    .map(([edgeId]) => edgeId);
+    let MaxLength = 0;   
+    //Utilisation du DFS pour calculer le chemin le plus long
+    const dfs = (edgeId: string, visited: Set<string>): number => {
+    visited.add(edgeId);
+    const edge = this.edges.get(edgeId)!;
+    let MaxLength = 0;
+    for (const otherEdge of Array.from(this.edges.values())) {
+    if (
+    this.roads.get(otherEdge.id) === playerId &&
+    !visited.has(otherEdge.id) &&
+    (otherEdge.node1Id === edge.node1Id || otherEdge.node2Id === edge.node1Id || 
+     otherEdge.node1Id === edge.node2Id || otherEdge.node2Id === edge.node2Id)
+) {
+   const length = 1 + dfs(otherEdge.id, visited);
+   if (length > MaxLength) {
+    MaxLength = length;
+   }
+}
+}
+return MaxLength;
+}  
+    //Lancer le DFS sur toutes routes
+    for (const edgeId of playerEdges) {
+    const length = dfs(edgeId, new Set<string>());
+    if (length > MaxLength) {
+        MaxLength = length;
+    }
+}
+return MaxLength;
+}
 
   public buildSettlement(playerId: string, nodeId: string): boolean {
     if (this.state.startsWith("SETUP") && this.setupStep !== "SETTLEMENT") return false;

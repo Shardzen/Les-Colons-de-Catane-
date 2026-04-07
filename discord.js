@@ -1,4 +1,4 @@
-//You can install directly discord.js file with npm install. For installing latest version command npm install discord.js@latest
+
 
 
 const { Client, GatewayIntentBits } = require('discord.js');
