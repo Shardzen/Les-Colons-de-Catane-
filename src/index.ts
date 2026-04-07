@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import { CatanEngine } from './CatanEngine.js';
 import { MapRenderer } from './MapRenderer.js';
 import { GamePhase, ResourceType, DevCardType } from './core/types.js';
+import { rulesCommand } from './discord/commands/rules.js'
 
 config();
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
@@ -60,8 +61,13 @@ client.on('interactionCreate', async (i) => {
         if (i.isChatInputCommand()) {
             if (i.commandName === 'start') { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: 'RED' }]; await i.reply('🆕 Lobby ouvert !'); }
             if (i.commandName === 'join') { if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: 'Erreur', ephemeral: true }); lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: ['BLUE', 'WHITE', 'ORANGE'][lobbyPlayers.length-1] }); await i.reply('✅ <@' + i.user.id + '> a rejoint !'); }
-            if (i.commandName === 'begin') { if (lobbyPlayers.length < 2) return i.reply('2 min.'); currentGame = new CatanEngine(lobbyPlayers); boardMessage = null; await updateBoard(i, 'Start !'); }
+            if (i.commandName === 'begin') { if (lobbyPlayers.length < 2) return i.reply('2 min.'); const embed = new EmbedBuilder()
+                .setTitle("⚔️ Game starts !")
+                .setDescription("La partie a commencé")
+                .setColor("#E67E22"); currentGame = new CatanEngine(lobbyPlayers); boardMessage = null; await i.reply({ embeds: [embed] }); await updateBoard(i, 'Game starts !'); }
             if (i.commandName === 'inventory') { if (!currentGame) return i.reply('N/A'); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply('?'); i.reply({ content: '🎒 Bois:' + p.resources[ResourceType.WOOD] + ' Argile:' + p.resources[ResourceType.BRICK] + ' Mouton:' + p.resources[ResourceType.SHEEP] + ' Blé:' + p.resources[ResourceType.WHEAT] + ' Minerai:' + p.resources[ResourceType.ORE] + ' | PV:' + p.victoryPoints, ephemeral: true }); }
+            if (i.commandName === 'rules') { await rulesCommand.execute(i); }
+        
         }
         if (i.isButton()) {
             if (!currentGame) return;

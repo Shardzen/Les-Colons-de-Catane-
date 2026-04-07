@@ -31,6 +31,12 @@ const StartCommand = new SlashCommandBuilder()
                 .setName('start')
                 .setDescription('Start new game')
 
+const rulesCommand = new SlashCommandBuilder()
+                .setName('rules')
+                .setDescription('Game rules')
+
+
+
 const BuildCommand = new SlashCommandBuilder()
   .setName('build')
   .setDescription('Build something')
@@ -50,4 +56,4 @@ const BuildCommand = new SlashCommandBuilder()
           );
           
 
-const commandsData = [JoinCommand, StartCommand, BuildCommand].map(cmd => cmd.toJSON());
+const commandsData = [JoinCommand, StartCommand, BuildCommand, rulesCommand].map(cmd => cmd.toJSON());
