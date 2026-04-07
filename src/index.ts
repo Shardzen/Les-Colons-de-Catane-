@@ -10,14 +10,17 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 let currentGame: CatanEngine | null = null, lobbyPlayers: any[] = [], pendingActions = new Map<string, any>();
 const CHANNELS = { PLATEAU: process.env.CHANNEL_PLATEAU, JOURNAL: process.env.CHANNEL_JOURNAL, COMMERCE: process.env.CHANNEL_COMMERCE };
 let boardMessage: Message | null = null;
+let TurnDMMessage: Message | null = null;
 
 
-async function sendTurnDM(player : any, row : any, message : string) {
-      console.log("sendTurnDM appelée pour", player.id);
-try {
-      const user = await client.users.fetch(player.id);
-await user.send({ content: message, components: [row] });
-} catch (e) { console.log("Erreur DM:", e); }
+
+async function sendTurnDM(player: any, row: any, message: string): Promise<Message | null> {
+    console.log("sendTurnDM appelée pour", player.id);
+    try {
+        const user = await client.users.fetch(player.id);
+        const msg = await user.send({ content: message, components: [row] });
+        return msg;
+    } catch (e) { console.log("Erreur DM:", e); return null; }
 }
 
 async function sendWaitDM(player: any) {
@@ -62,15 +65,25 @@ async function updateBoard(interaction?: any, logMsg: string = '') {
             if (currentGame.setupStep === 'SETTLEMENT') row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Colonie').setStyle(ButtonStyle.Success));
             else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Route').setStyle(ButtonStyle.Success));
         }
-         await sendTurnDM(currentGame.currentPlayer, row, "🎲 C'est ton tour");
+        TurnDMMessage = await sendTurnDM(currentGame.currentPlayer, row, "🎲 C'est ton tour");
         currentGame.players.forEach(async (player) => {
     if (player.id !== currentGame!.currentPlayer.id) {
         await sendWaitDM(player);
     }
 });
-        const msg = currentGame.state === GamePhase.FINISHED ? '🏆 Fin !' : '🎮 Tour de <@' + p.id + '> (' + currentGame.state + ')';
-        if (interaction && interaction.isRepliable()) { if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [row], files: [] }); else await interaction.reply({ content: msg, components: [row] }); }
-        else if (CHANNELS.COMMERCE) { const c = client.channels.cache.get(CHANNELS.COMMERCE) as TextChannel; if (c) await c.send({ content: msg, components: [row] }); }
+        const msg = currentGame.state === GamePhase.FINISHED ? '🏆 Fin !' : '🎮 Tour de <@' + p.id + '>';
+        if (interaction && interaction.isRepliable()) { if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [], files: [] }); else await interaction.reply({ content: msg, components: [], ephemeral : true }); }
+        else if (CHANNELS.COMMERCE) { const c = client.channels.cache.get(CHANNELS.COMMERCE) as TextChannel;  if (c) {
+        if (boardMessage) {
+            try {
+                await boardMessage.edit({ content: msg, components: [row] });
+            } catch (e) {
+                boardMessage = await c.send({ content: msg, components: [row] });
+            }
+        } else {
+            boardMessage = await c.send({ content: msg, components: [row] });
+        }
+    } }
         if (currentGame.players.some(p => p.victoryPoints >= 10)) {
             const w = currentGame.players.find(p => p.victoryPoints >= 10)!;
             if (CHANNELS.JOURNAL) { const c = client.channels.cache.get(CHANNELS.JOURNAL) as TextChannel; if (c) await c.send('🏆 **VICTOIRE** : <@' + w.id + '> a gagné !'); }
@@ -82,7 +95,11 @@ async function updateBoard(interaction?: any, logMsg: string = '') {
 client.on('interactionCreate', async (i) => {
     try {
         if (i.isChatInputCommand()) {
-            if (i.commandName === 'start') { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: '#E74C3C' }]; await i.reply('🆕 Lobby ouvert !'); }
+            if (i.commandName === 'start') { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: '#E74C3C' }];  const embed = new EmbedBuilder()
+                 .setTitle("🏝️ Île de Catane")
+                 .setDescription("🆕 Lobby ouvert ! Utilisez `/join` pour rejoindre.")
+                 .setColor("#FF0000");
+                    await i.reply({ embeds: [embed] }); await i.reply('🆕 Lobby ouvert !'); }
             if (i.commandName === 'join') { if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: 'Erreur', ephemeral: true }); lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: ['#3498DB', '#FFFFFF', '#E67E22'][lobbyPlayers.length-1] }); const embed = new EmbedBuilder()
                              .setTitle("🏰 Nouveau Colon !")
                              .setDescription(`**${i.user.username}** a rejoint l'île de Catane !\n\n**Joueurs** (${lobbyPlayers.length}/4) :\n${lobbyPlayers.map(p => `• ${p.username}`).join('\n')}`)
@@ -99,7 +116,7 @@ client.on('interactionCreate', async (i) => {
         }
         if (i.isButton()) {
             if (!currentGame) return;
-            if (i.customId === 'roll_dice') { const res = currentGame.rollDice(); if (res) { await i.deferUpdate(); await updateBoard(i, '<@' + i.user.id + '> a fait **' + res.total + '**.'); } }
+            if (i.customId === 'roll_dice') { const res = currentGame.rollDice(); if (res) { await i.deferUpdate(); await i.editReply({ components: []}); await updateBoard(i, '<@' + i.user.id + '> a fait **' + res.total + '**.'); } }
             if (i.customId === 'trade_btn') {
                 const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
                     new ButtonBuilder().setCustomId('trade_bank_init').setLabel('🏦 Banque (4:1)').setStyle(ButtonStyle.Secondary),
@@ -146,7 +163,11 @@ client.on('interactionCreate', async (i) => {
                 const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: 'Hex ' + s.label, value: s.id })));
                 await i.reply({ content: '😈 Déplacer :', components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
-            if (i.customId === 'end_turn') { currentGame.nextTurn(); await i.deferUpdate(); await updateBoard(i, '<@' + i.user.id + '> a fini.'); }
+            if (TurnDMMessage) {
+        try { await TurnDMMessage.edit({ components: [] }); } catch {}
+        TurnDMMessage = null;
+    }
+            if (i.customId === 'end_turn') { currentGame.nextTurn(); await i.deferUpdate(); await i.editReply({ components: []}); await updateBoard(i, '<@' + i.user.id + '> a fini.'); }
         }
         if (i.isStringSelectMenu()) {
             if (i.customId === 'trade_bank_give') {
