@@ -59,8 +59,13 @@ async function updateBoard(interaction?: any, logMsg: string = '') {
 client.on('interactionCreate', async (i) => {
     try {
         if (i.isChatInputCommand()) {
-            if (i.commandName === 'start') { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: 'RED' }]; await i.reply('🆕 Lobby ouvert !'); }
-            if (i.commandName === 'join') { if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: 'Erreur', ephemeral: true }); lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: ['BLUE', 'WHITE', 'ORANGE'][lobbyPlayers.length-1] }); await i.reply('✅ <@' + i.user.id + '> a rejoint !'); }
+            if (i.commandName === 'start') { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: '#E74C3C' }]; await i.reply('🆕 Lobby ouvert !'); }
+            if (i.commandName === 'join') { if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: 'Erreur', ephemeral: true }); lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: ['#3498DB', '#FFFFFF', '#E67E22'][lobbyPlayers.length-1] }); const embed = new EmbedBuilder()
+                             .setTitle("🏰 Nouveau Colon !")
+                             .setDescription(`**${i.user.username}** a rejoint l'île de Catane !\n\n**Joueurs** (${lobbyPlayers.length}/4) :\n${lobbyPlayers.map(p => `• ${p.username}`).join('\n')}`)
+                .setThumbnail(i.user.displayAvatarURL())
+                .setColor(lobbyPlayers[lobbyPlayers.length - 1].color as any)
+                .setFooter({ text: "Tapez /begin pour lancer la partie !" }); await i.reply({ embeds: [embed] }); }
             if (i.commandName === 'begin') { if (lobbyPlayers.length < 2) return i.reply('2 min.'); const embed = new EmbedBuilder()
                 .setTitle("⚔️ Game starts !")
                 .setDescription("La partie a commencé")
@@ -170,6 +175,6 @@ client.on('interactionCreate', async (i) => {
                 else await i.update({ content: '❌ Erreur', components: [] });
             }
         }
-    } catch (e) {}
+    } catch (e) {console.error(e);}
 });
 client.login(process.env.DISCORD_TOKEN);
