@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-﻿import { kMaxLength } from "buffer";
-import { ResourceType, BuildingType, Player, Hex, Building, GameState, Node, Edge } from "./types.js";    
-=======
 import { ResourceType, BuildingType, Player, Hex, Building, GamePhase, Node, Edge, DevCardType } from "./core/types.js";
->>>>>>> catan
 
 export class CatanEngine {
   public map: Hex[] = [];
@@ -111,71 +106,12 @@ export class CatanEngine {
     return { total, harvests, isRobber: false, toDiscard: [] };
   }
 
-<<<<<<< HEAD
-  public tradeWithBank(playerId: string, give: ResourceType, receive: ResourceType): boolean {
-      const p = this.players.find(p => p.id === playerId);
-      if (!p || !this.hasRolled || p.resources[give] < 4) return false;
-      p.resources[give] -= 4; p.resources[receive] += 1;
-      return true;
-  }
- 
-  // Fonction LongestRoad qui va attribuer les IDs des routes du joueur 
-  public calculateLongestRoad(playerId: string): number {
-    const playerEdges = Array.from(this.roads.entries())
-    .filter(([edgeId, owner]) => owner === playerId)
-    .map(([edgeId]) => edgeId);
-    let MaxLength = 0;   
-    //Utilisation du DFS pour calculer le chemin le plus long
-    const dfs = (edgeId: string, visited: Set<string>): number => {
-    visited.add(edgeId);
-    const edge = this.edges.get(edgeId)!;
-    let MaxLength = 0;
-    for (const otherEdge of Array.from(this.edges.values())) {
-    if (
-    this.roads.get(otherEdge.id) === playerId &&
-    !visited.has(otherEdge.id) &&
-    (otherEdge.node1Id === edge.node1Id || otherEdge.node2Id === edge.node1Id || 
-     otherEdge.node1Id === edge.node2Id || otherEdge.node2Id === edge.node2Id)
-) {
-   const length = 1 + dfs(otherEdge.id, visited);
-   if (length > MaxLength) {
-    MaxLength = length;
-   }
-}
-}
-return MaxLength;
-}  
-    //Lancer le DFS sur toutes routes
-    for (const edgeId of playerEdges) {
-    const length = dfs(edgeId, new Set<string>());
-    if (length > MaxLength) {
-        MaxLength = length;
-    }
-}
-return MaxLength;
-}
-
-  public buildSettlement(playerId: string, nodeId: string): boolean {
-    if (this.state.startsWith("SETUP") && this.setupStep !== "SETTLEMENT") return false;
-    if (!this.canBuildSettlement(playerId, nodeId)) return false;
-
-    const p = this.players.find(p => p.id === playerId)!;
-    if (this.state === GameState.PLAYING) {
-        p.resources[ResourceType.WOOD]--; p.resources[ResourceType.BRICK]--; p.resources[ResourceType.WOOL]--; p.resources[ResourceType.GRAIN]--;
-    } else if (this.state === GameState.SETUP_2) {
-        this.nodes.get(nodeId)!.hexes.forEach(h => { if (h.resource !== ResourceType.DESERT) p.resources[h.resource]++; });
-    }
-    this.settlements.set(nodeId, { playerId, type: BuildingType.SETTLEMENT });
-    p.victoryPoints++;
-    this.setupStep = "ROAD";
-=======
   public discard(pId: string, resources: Partial<Record<ResourceType, number>>): boolean {
     const p = this.players.find(x => x.id === pId);
     if (!p || this.phase !== GamePhase.DISCARDING) return false;
     for (const [res, qty] of Object.entries(resources)) { if (p.resources[res as ResourceType] < (qty || 0)) return false; p.resources[res as ResourceType] -= (qty || 0); }
     this.discardedPlayers.add(pId);
     if (this.players.filter(pl => this.getPlayerResourceCount(pl.id) > 7).every(pl => this.discardedPlayers.has(pl.id))) this.phase = GamePhase.ROBBER_MOVE;
->>>>>>> catan
     return true;
   }
 
@@ -183,8 +119,7 @@ return MaxLength;
     const newHex = this.map.find(h => h.id === hexId);
     if (!newHex || newHex.hasRobber) return { success: false, victims: [] };
     this.map.forEach(h => h.hasRobber = false); newHex.hasRobber = true;
-    const vIds = Array.from(this.nodes.values()).filter(n => n.hexes.some(h => h.id === hexId)).map(n => this.settlements.get(n.id)?.playerId).filter((id): id is string => !!id && id !== pId && this.getPlayerResourceCount(id) > 0);
-    const victims = Array.from(new Set(vIds));
+    const victims = Array.from(new Set(Array.from(this.nodes.values()).filter(n => n.hexes.some(h => h.id === hexId)).map(n => this.settlements.get(n.id)?.playerId).filter((id): id is string => !!id && id !== pId && this.getPlayerResourceCount(id) > 0)));
     this.phase = victims.length > 0 ? GamePhase.ROBBER_STEAL : GamePhase.PLAYING;
     return { success: true, victims };
   }

@@ -1,9 +1,5 @@
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> catan
 const { Client, GatewayIntentBits } = require('discord.js');
 
 // Création du client

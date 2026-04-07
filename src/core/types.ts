@@ -28,37 +28,7 @@ export enum DevCardType {
   VICTORY_POINT = "VICTORY_POINT"
 }
 
-<<<<<<< HEAD
-export type DevCard =
-  | {
-      type: "knight";
-      played: boolean;
-      turn: number;
-    }
-  | {
-      type: "victory";
-      victoryPoints: 1;
-      played: boolean;
-      turn: number;
-    }
-  | {
-      type: "progress";
-      effect: ProgressEffect;
-      played: boolean;
-      turn: number;
-    };
-
-export type ProgressEffect =
-  | { type: "roadBuilding" } // Construire routes
-  | { type: "yearOfPlenty" } // Choisir 2 ressources dans le jeu
-  | { type: "monopoly" }; // Monopole : joueur annonce un type de ressource et autres joueurs lui donnent
-
-// --- 4. JOUEUR ---
-
-export type Player = {
-=======
 export interface Player {
->>>>>>> catan
   id: string;
   username: string;
   resources: Record<ResourceType, number>;

@@ -35,10 +35,6 @@ export const rulesCommand = {
         }
       )
 
-<<<<<<< HEAD
-=======
-
->>>>>>> catan
       .setFooter({ text: "Bonne chance à tous !" });
 
     await interaction.reply({ embeds: [embed] });
