@@ -21,8 +21,7 @@ export const beginCommand = {
             .setLabel('Lancer les Dés')
             .setStyle(ButtonStyle.Primary);
 
-        // Créer ActionRow de type row qui va afficher les boutons à affucher
-        // ajout d'une fonction Components qui permet lancer les dés
+
         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(rollButton);
 
         const embed = new EmbedBuilder()
@@ -32,9 +31,8 @@ export const beginCommand = {
                 `${boardRender}\n\n` +
                 `C'est au tour de ${game.players[game.currentPlayerIndex]?.username} de jouer !`
             )
-            .setColor(0xFFA500); // Couleur de l'affichage
+            .setColor(0xFFA500);
 
-        // Affiche le texte du dessus par la fonction embed créée juste en haut
         await interaction.reply({ embeds: [embed], components: [row] });
 
     } else {
@@ -44,8 +42,6 @@ export const beginCommand = {
         });
     }
 
-    // On délègue la création de la partie au callback (dans index.ts)
-    // pour garder l'instance CatanEngine centralisée.
     await startGameCallback(interaction);
   }
 };

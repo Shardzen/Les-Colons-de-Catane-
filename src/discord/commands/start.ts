@@ -25,7 +25,6 @@ export const startCommand = {
             'WOOD': 0, 'BRICK': 0, 'SHEEP': 0, 'WHEAT': 0, 'ORE': 0
         },
 
-        // Valeur intiale de 0
         devCards: [],
 
 

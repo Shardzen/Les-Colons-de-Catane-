@@ -58,9 +58,8 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
             turn: 0
     });
   }
-<<<<<<< HEAD
-    }
 
+  
     const embed = new EmbedBuilder()
       .setTitle("🃏 Cartes de Développement")
       .setColor(0x8E44AD)
@@ -76,7 +75,7 @@ async execute(interaction: CommandInteraction, gameManager: GameManager) {
     await interaction.reply({ embeds: [embed] });
   }
 };
-=======
+
   for (let i = 0; i < 2; i++) { //
             deck.push({
             type: "progress",

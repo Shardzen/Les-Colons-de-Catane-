@@ -2,15 +2,12 @@ import { SlashCommandBuilder, CommandInteraction, EmbedBuilder } from "discord.j
 
 export const rulesCommand = {
 
-  // Affiche "/rules" dans le Discord
   data: new SlashCommandBuilder()
     .setName("rules")
     .setDescription("Affiche les règles du jeu"),
 
-  // Discord interagit avec la commande /rules
   async execute(interaction: CommandInteraction) {
 
-    // Embed affiche consignes
     const embed = new EmbedBuilder()
       .setTitle("📜 Règles des Colons de Catane") // Titre principal de l'embed
       .setColor(0xE8A838)                          // Couleur dorée cohérente avec le thème Catane
@@ -38,10 +35,8 @@ export const rulesCommand = {
         }
       )
 
-      // Affiche texte en bas de page
       .setFooter({ text: "Bonne chance à tous !" });
 
-    // Envoie message
     await interaction.reply({ embeds: [embed] });
   }
 };
