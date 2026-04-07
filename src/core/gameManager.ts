@@ -156,6 +156,7 @@ export class GameManager {
     return { success: true };
   }
 
+  public startGame(channelId: string): boolean { return this.createGame(channelId) !== null; }
   public createGame(channelId: string): CatanEngine | null {
     const lobby = this.lobbys.get(channelId);
     if (!lobby || lobby.length < 2) return null;

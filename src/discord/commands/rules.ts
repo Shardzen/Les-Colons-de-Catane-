@@ -9,8 +9,8 @@ export const rulesCommand = {
   async execute(interaction: CommandInteraction) {
 
     const embed = new EmbedBuilder()
-      .setTitle("📜 Règles des Colons de Catane") // Titre principal de l'embed
-      .setColor(0xE8A838)                          // Couleur dorée cohérente avec le thème Catane
+      .setTitle("📜 Règles des Colons de Catane")
+      .setColor(0xE8A838)
 
       .addFields(
         {
@@ -35,6 +35,10 @@ export const rulesCommand = {
         }
       )
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> catan
       .setFooter({ text: "Bonne chance à tous !" });
 
     await interaction.reply({ embeds: [embed] });
