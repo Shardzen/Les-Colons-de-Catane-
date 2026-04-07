@@ -11,6 +11,23 @@ let currentGame: CatanEngine | null = null, lobbyPlayers: any[] = [], pendingAct
 const CHANNELS = { PLATEAU: process.env.CHANNEL_PLATEAU, JOURNAL: process.env.CHANNEL_JOURNAL, COMMERCE: process.env.CHANNEL_COMMERCE };
 let boardMessage: Message | null = null;
 
+
+async function sendTurnDM(player : any, row : any, message : string) {
+      console.log("sendTurnDM appelée pour", player.id);
+try {
+      const user = await client.users.fetch(player.id);
+await user.send({ content: message, components: [row] });
+} catch (e) { console.log("Erreur DM:", e); }
+}
+
+async function sendWaitDM(player: any) {
+    try {
+        const user = await client.users.fetch(player.id);
+        await user.send("⏳ Ce n'est pas encore ton tour...");
+    } catch (e) {}
+}
+
+
 function getLabel(i: number) { let l = ''; while (i >= 0) { l = String.fromCharCode(65 + (i % 26)) + l; i = Math.floor(i / 26) - 1; } return l; }
 async function updateBoard(interaction?: any, logMsg: string = '') {
     if (!currentGame) return;
@@ -45,6 +62,12 @@ async function updateBoard(interaction?: any, logMsg: string = '') {
             if (currentGame.setupStep === 'SETTLEMENT') row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Colonie').setStyle(ButtonStyle.Success));
             else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Route').setStyle(ButtonStyle.Success));
         }
+         await sendTurnDM(currentGame.currentPlayer, row, "🎲 C'est ton tour");
+        currentGame.players.forEach(async (player) => {
+    if (player.id !== currentGame!.currentPlayer.id) {
+        await sendWaitDM(player);
+    }
+});
         const msg = currentGame.state === GamePhase.FINISHED ? '🏆 Fin !' : '🎮 Tour de <@' + p.id + '> (' + currentGame.state + ')';
         if (interaction && interaction.isRepliable()) { if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [row], files: [] }); else await interaction.reply({ content: msg, components: [row] }); }
         else if (CHANNELS.COMMERCE) { const c = client.channels.cache.get(CHANNELS.COMMERCE) as TextChannel; if (c) await c.send({ content: msg, components: [row] }); }
@@ -70,7 +93,7 @@ client.on('interactionCreate', async (i) => {
                 .setTitle("⚔️ Game starts !")
                 .setDescription("La partie a commencé")
                 .setColor("#E67E22"); currentGame = new CatanEngine(lobbyPlayers); boardMessage = null; await i.reply({ embeds: [embed] }); await updateBoard(i, 'Game starts !'); }
-            if (i.commandName === 'inventory') { if (!currentGame) return i.reply('N/A'); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply('?'); i.reply({ content: '🎒 Bois:' + p.resources[ResourceType.WOOD] + ' Argile:' + p.resources[ResourceType.BRICK] + ' Mouton:' + p.resources[ResourceType.SHEEP] + ' Blé:' + p.resources[ResourceType.WHEAT] + ' Minerai:' + p.resources[ResourceType.ORE] + ' | PV:' + p.victoryPoints, ephemeral: true }); }
+            if (i.commandName === 'cards') { if (!currentGame) return i.reply('N/A'); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply('?'); i.reply({ content: '🎒 Bois:' + p.resources[ResourceType.WOOD] + ' Argile:' + p.resources[ResourceType.BRICK] + ' Mouton:' + p.resources[ResourceType.SHEEP] + ' Blé:' + p.resources[ResourceType.WHEAT] + ' Minerai:' + p.resources[ResourceType.ORE] + ' | PV:' + p.victoryPoints, ephemeral: true }); }
             if (i.commandName === 'rules') { await rulesCommand.execute(i); }
         
         }
