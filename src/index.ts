@@ -8,27 +8,34 @@ config();
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 let currentGame: CatanEngine | null = null, lobbyPlayers: any[] = [], pendingActions = new Map<string, any>();
 const CHANNELS = { PLATEAU: process.env.CHANNEL_PLATEAU, JOURNAL: process.env.CHANNEL_JOURNAL, COMMERCE: process.env.CHANNEL_COMMERCE };
-let boardMessage: Message | null = null;
+let boardMsg: Message | null = null, controlMsg: Message | null = null;
 
 function getLabel(i: number) { let l = ''; while (i >= 0) { l = String.fromCharCode(65 + (i % 26)) + l; i = Math.floor(i / 26) - 1; } return l; }
-async function updateBoard(interaction?: any, logMsg: string = '') {
+
+async function updateInterface(logMsg: string = '') {
     if (!currentGame) return;
     try {
         const buffer = await MapRenderer.renderMapToBuffer(currentGame);
         const attachment = new AttachmentBuilder(buffer, { name: 'catan.png' });
         const p = currentGame.currentPlayer;
+
         if (CHANNELS.PLATEAU) {
             const pc = client.channels.cache.get(CHANNELS.PLATEAU) as TextChannel;
             if (pc) {
-                const content = '🗺️ **Plateau** | Tour de <@' + p.id + '> | <t:' + Math.floor(Date.now()/1000) + ':R>';
-                if (boardMessage) { try { await boardMessage.edit({ content, files: [attachment] }); } catch (e) { boardMessage = await pc.send({ content, files: [attachment] }); } }
-                else boardMessage = await pc.send({ content, files: [attachment] });
+                const content = '🗺️ **Plateau de Jeu** | Tour de <@' + p.id + '>';
+                if (boardMsg) { try { await boardMsg.edit({ content, files: [attachment] }); } catch (e) { boardMsg = await pc.send({ content, files: [attachment] }); } }
+                else boardMsg = await pc.send({ content, files: [attachment] });
             }
         }
-        if (logMsg && CHANNELS.JOURNAL) { const c = client.channels.cache.get(CHANNELS.JOURNAL) as TextChannel; if (c) await c.send('📖 **Journal** : ' + logMsg); }
+
+        if (logMsg && CHANNELS.JOURNAL) { 
+            const jc = client.channels.cache.get(CHANNELS.JOURNAL) as TextChannel; 
+            if (jc) await jc.send('📖 ' + logMsg); 
+        }
+
         const row = new ActionRowBuilder<ButtonBuilder>();
         if (currentGame.state === GamePhase.PLAYING) {
-            if (!currentGame.hasRolled) row.addComponents(new ButtonBuilder().setCustomId('roll_dice').setLabel('🎲 Dés').setStyle(ButtonStyle.Primary));
+            if (!currentGame.hasRolled) row.addComponents(new ButtonBuilder().setCustomId('roll_dice').setLabel('🎲 Lancer les Dés').setStyle(ButtonStyle.Primary));
             else {
                 row.addComponents(
                     new ButtonBuilder().setCustomId('build_settlement').setLabel('🏠 Colonie').setStyle(ButtonStyle.Success),
@@ -41,31 +48,52 @@ async function updateBoard(interaction?: any, logMsg: string = '') {
         } else if (currentGame.state === GamePhase.ROBBER_MOVE) { row.addComponents(new ButtonBuilder().setCustomId('move_robber_btn').setLabel('😈 Déplacer Voleur').setStyle(ButtonStyle.Danger)); }
         else if (currentGame.state === GamePhase.DISCARDING) { row.addComponents(new ButtonBuilder().setCustomId('discard_btn').setLabel('🗑️ Défausse').setStyle(ButtonStyle.Danger)); }
         else if (currentGame.state !== GamePhase.FINISHED) {
-            if (currentGame.setupStep === 'SETTLEMENT') row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Colonie').setStyle(ButtonStyle.Success));
-            else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Route').setStyle(ButtonStyle.Success));
+            if (currentGame.setupStep === 'SETTLEMENT') row.addComponents(new ButtonBuilder().setCustomId('setup_settlement').setLabel('🏠 Poser Colonie').setStyle(ButtonStyle.Success));
+            else row.addComponents(new ButtonBuilder().setCustomId('setup_road').setLabel('🛣️ Poser Route').setStyle(ButtonStyle.Success));
         }
-        const msg = currentGame.state === GamePhase.FINISHED ? '🏆 Fin !' : '🎮 Tour de <@' + p.id + '> (' + currentGame.state + ')';
-        if (interaction && interaction.isRepliable()) { if (interaction.replied || interaction.deferred) await interaction.editReply({ content: msg, components: [row], files: [] }); else await interaction.reply({ content: msg, components: [row] }); }
-        else if (CHANNELS.COMMERCE) { const c = client.channels.cache.get(CHANNELS.COMMERCE) as TextChannel; if (c) await c.send({ content: msg, components: [row] }); }
-        if (currentGame.players.some(p => p.victoryPoints >= 10)) {
-            const w = currentGame.players.find(p => p.victoryPoints >= 10)!;
-            if (CHANNELS.JOURNAL) { const c = client.channels.cache.get(CHANNELS.JOURNAL) as TextChannel; if (c) await c.send('🏆 **VICTOIRE** : <@' + w.id + '> a gagné !'); }
+
+        if (CHANNELS.COMMERCE) {
+            const cc = client.channels.cache.get(CHANNELS.COMMERCE) as TextChannel;
+            if (cc) {
+                const content = '🎮 **Contrôles** | Tour de <@' + p.id + '> (' + currentGame.state + ')';
+                if (controlMsg) { try { await controlMsg.edit({ content, components: row.components.length > 0 ? [row] : [] }); } catch (e) { controlMsg = await cc.send({ content, components: [row] }); } }
+                else controlMsg = await cc.send({ content, components: [row] });
+            }
+        }
+
+        if (currentGame.players.some(pl => pl.victoryPoints >= 10)) {
+            const w = currentGame.players.find(pl => pl.victoryPoints >= 10)!;
+            if (CHANNELS.JOURNAL) { const jc = client.channels.cache.get(CHANNELS.JOURNAL) as TextChannel; if (jc) await jc.send('🏆 **VICTOIRE** : <@' + w.id + '> a gagné !'); }
             currentGame.state = GamePhase.FINISHED;
         }
-    } catch (e) {}
+    } catch (e) { console.error(e); }
 }
 
 client.on('interactionCreate', async (i) => {
     try {
         if (i.isChatInputCommand()) {
             if (i.commandName === 'start') { lobbyPlayers = [{ id: i.user.id, username: i.user.username, color: 'RED' }]; await i.reply('🆕 Lobby ouvert !'); }
-            if (i.commandName === 'join') { if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: 'Erreur', ephemeral: true }); lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: ['BLUE', 'WHITE', 'ORANGE'][lobbyPlayers.length-1] }); await i.reply('✅ <@' + i.user.id + '> a rejoint !'); }
-            if (i.commandName === 'begin') { if (lobbyPlayers.length < 2) return i.reply('2 min.'); currentGame = new CatanEngine(lobbyPlayers); boardMessage = null; await updateBoard(i, 'Start !'); }
-            if (i.commandName === 'inventory') { if (!currentGame) return i.reply('N/A'); const p = currentGame.players.find(p => p.id === i.user.id); if (!p) return i.reply('?'); i.reply({ content: '🎒 Bois:' + p.resources[ResourceType.WOOD] + ' Argile:' + p.resources[ResourceType.BRICK] + ' Mouton:' + p.resources[ResourceType.SHEEP] + ' Blé:' + p.resources[ResourceType.WHEAT] + ' Minerai:' + p.resources[ResourceType.ORE] + ' | PV:' + p.victoryPoints, ephemeral: true }); }
+            if (i.commandName === 'join') { 
+                if (lobbyPlayers.length >= 4 || lobbyPlayers.find((p:any) => p.id === i.user.id)) return i.reply({ content: 'Erreur', ephemeral: true }); 
+                lobbyPlayers.push({ id: i.user.id, username: i.user.username, color: ['BLUE', 'WHITE', 'ORANGE'][lobbyPlayers.length-1] }); 
+                await i.reply('✅ <@' + i.user.id + '> a rejoint !'); 
+            }
+            if (i.commandName === 'begin') { 
+                if (lobbyPlayers.length < 2) return i.reply('2 min.'); 
+                currentGame = new CatanEngine(lobbyPlayers); boardMsg = null; controlMsg = null;
+                await i.reply({ content: '🚀 Partie lancée ! Allez dans les salons publics.', ephemeral: true });
+                await updateInterface('La partie commence !'); 
+            }
+            if (i.commandName === 'inventory') { 
+                if (!currentGame) return i.reply('N/A'); 
+                const p = currentGame.players.find(pl => pl.id === i.user.id); 
+                if (!p) return i.reply('?'); 
+                i.reply({ content: '🎒 Bois:' + p.resources[ResourceType.WOOD] + ' Argile:' + p.resources[ResourceType.BRICK] + ' Mouton:' + p.resources[ResourceType.SHEEP] + ' Blé:' + p.resources[ResourceType.WHEAT] + ' Minerai:' + p.resources[ResourceType.ORE] + ' | PV:' + p.victoryPoints, ephemeral: true }); 
+            }
         }
         if (i.isButton()) {
-            if (!currentGame) return;
-            if (i.customId === 'roll_dice') { const res = currentGame.rollDice(); if (res) { await i.deferUpdate(); await updateBoard(i, '<@' + i.user.id + '> a fait **' + res.total + '**.'); } }
+            if (!currentGame || (i.user.id !== currentGame.currentPlayer.id && currentGame.state !== GamePhase.DISCARDING)) return i.reply({ content: 'Pas ton tour !', ephemeral: true });
+            if (i.customId === 'roll_dice') { const res = currentGame.rollDice(); if (res) { await i.deferUpdate(); await updateInterface('<@' + i.user.id + '> a fait **' + res.total + '**.'); } }
             if (i.customId === 'trade_btn') {
                 const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
                     new ButtonBuilder().setCustomId('trade_bank_init').setLabel('🏦 Banque (4:1)').setStyle(ButtonStyle.Secondary),
@@ -82,15 +110,14 @@ client.on('interactionCreate', async (i) => {
                 await i.update({ content: '👥 Que donnes-tu ?', components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)] });
             }
             if (i.customId.startsWith('accept_trade_')) {
-                const parts = i.customId.split('_');
-                const p1Id = parts[2], resGive = parts[3], resGet = parts[4];
+                const parts = i.customId.split('_'); const p1Id = parts[2], resGive = parts[3], resGet = parts[4];
                 if (i.user.id === p1Id) return i.reply({ content: 'Pas ton propre échange.', ephemeral: true });
                 if (currentGame.executeTrade(p1Id, i.user.id, { [resGive as ResourceType]: 1 }, { [resGet as ResourceType]: 1 })) {
-                    await i.update({ content: '✅ Échange accepté !', components: [] }); await updateBoard(null, '<@' + i.user.id + '> a accepté l échange de <@' + p1Id + '>.');
+                    await i.update({ content: '✅ Échange accepté !', components: [] }); await updateInterface('<@' + i.user.id + '> a accepté l échange de <@' + p1Id + '>.');
                 } else await i.reply({ content: 'Ressources insuffisantes.', ephemeral: true });
             }
             if (i.customId === 'discard_btn') {
-                const p = currentGame.players.find(p => p.id === i.user.id)!;
+                const p = currentGame.players.find(pl => pl.id === i.user.id)!;
                 const s = new StringSelectMenuBuilder().setCustomId('discard_select').setMinValues(1).setMaxValues(5);
                 Object.entries(p.resources).forEach(([res, qty]) => { if (qty > 0) s.addOptions({ label: res + ' (' + qty + ')', value: res }); });
                 await i.reply({ content: 'Choisis les cartes à jeter :', components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
@@ -112,7 +139,7 @@ client.on('interactionCreate', async (i) => {
                 const s = new StringSelectMenuBuilder().setCustomId('select_spot').addOptions(spots.slice(0, 25).map(s => ({ label: 'Hex ' + s.label, value: s.id })));
                 await i.reply({ content: '😈 Déplacer :', components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(s)], ephemeral: true });
             }
-            if (i.customId === 'end_turn') { currentGame.nextTurn(); await i.deferUpdate(); await updateBoard(i, '<@' + i.user.id + '> a fini.'); }
+            if (i.customId === 'end_turn') { currentGame.nextTurn(); await i.deferUpdate(); await updateInterface('<@' + i.user.id + '> a fini son tour.'); }
         }
         if (i.isStringSelectMenu()) {
             if (i.customId === 'trade_bank_give') {
@@ -121,7 +148,7 @@ client.on('interactionCreate', async (i) => {
             }
             if (i.customId.startsWith('trade_bank_get_')) {
                 const give = i.customId.split('_')[3] as ResourceType, get = i.values[0] as ResourceType;
-                if (currentGame!.tradeWithBank(i.user.id, give, get)) { await i.update({ content: '✅ Fait', components: [] }); await updateBoard(); }
+                if (currentGame!.tradeWithBank(i.user.id, give, get)) { await i.update({ content: '✅ Fait', components: [] }); await updateInterface('<@' + i.user.id + '> a échangé avec la banque.'); }
                 else await i.update({ content: '❌ Impossible', components: [] });
             }
             if (i.customId === 'trade_p_give') {
@@ -133,7 +160,7 @@ client.on('interactionCreate', async (i) => {
                 const row = new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId('accept_trade_' + i.user.id + '_' + give + '_' + get).setLabel('Accepter').setStyle(ButtonStyle.Success));
                 if (CHANNELS.COMMERCE) {
                     const c = client.channels.cache.get(CHANNELS.COMMERCE) as TextChannel;
-                    await c.send({ content: '🤝 **ÉCHANGE** : <@' + i.user.id + '> donne **1 ' + give + '** contre **1 ' + get + '**.', components: [row] });
+                    await c.send({ content: '🤝 **ÉCHANGE** : <@' + i.user.id + '> propose **1 ' + give + '** contre **1 ' + get + '**.', components: [row] });
                 }
                 await i.update({ content: 'Offre envoyée !', components: [] });
             }
@@ -151,16 +178,16 @@ client.on('interactionCreate', async (i) => {
                     }
                     ok = res.success;
                 }
-                if (ok) { await i.update({ content: '✅ OK', components: [], files: [] }); await updateBoard(); }
+                if (ok) { await i.update({ content: '✅ OK', components: [], files: [] }); await updateInterface('<@' + i.user.id + '> a fini son action.'); }
                 pendingActions.delete(i.user.id);
             }
             if (i.customId === 'steal_select') {
                 const stolen = currentGame!.stealCard(i.user.id, i.values[0]);
-                await i.update({ content: '🕵️ Volé : **' + stolen + '**', components: [] }); await updateBoard();
+                await i.update({ content: '🕵️ Volé : **' + stolen + '**', components: [] }); await updateInterface();
             }
             if (i.customId === 'discard_select') {
                 const res: any = {}; i.values.forEach(v => res[v] = 1);
-                if (currentGame!.discard(i.user.id, res)) await i.update({ content: '✅ Défaussé', components: [] });
+                if (currentGame!.discard(i.user.id, res)) { await i.update({ content: '✅ Défaussé', components: [] }); await updateInterface(); }
                 else await i.update({ content: '❌ Erreur', components: [] });
             }
         }
