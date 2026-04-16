@@ -96,6 +96,42 @@ export class MapRenderer {
       }
     });
 
+    const portColors: Record<string, string> = {
+        '3:1': '#FFFFFF',
+        [ResourceType.WOOD]: '#2E7D32',
+        [ResourceType.BRICK]: '#C62828',
+        [ResourceType.SHEEP]: '#9CCC65',
+        [ResourceType.WHEAT]: '#FDD835',
+        [ResourceType.ORE]: '#757575',
+    };
+    const portLabels: Record<string, string> = {
+        '3:1': '3:1',
+        [ResourceType.WOOD]: '🌲2:1',
+        [ResourceType.BRICK]: '🧱2:1',
+        [ResourceType.SHEEP]: '🐑2:1',
+        [ResourceType.WHEAT]: '🌾2:1',
+        [ResourceType.ORE]: '⛰2:1',
+    };
+    for (const port of engine.getPortEdges()) {
+        const n1 = engine.nodes.get(port.node1Id)!, n2 = engine.nodes.get(port.node2Id)!;
+        const mx = offsetX + (n1.x + n2.x) / 2;
+        const my = offsetY + (n1.y + n2.y) / 2;
+        ctx.save();
+        ctx.translate(mx, my);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = portColors[port.type] ?? '#FFFFFF';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(-8, -8, 16, 16);
+        ctx.strokeRect(-8, -8, 16, 16);
+        ctx.restore();
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 9px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(portLabels[port.type] ?? port.type, mx, my + 18);
+    }
+
     return canvas.toBuffer("image/png");
   }
 
