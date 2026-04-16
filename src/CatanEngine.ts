@@ -1,4 +1,4 @@
-﻿import { ResourceType, BuildingType, Player, Hex, Building, GamePhase, Node, Edge, DevCardType } from './core/types.js';
+import { ResourceType, BuildingType, Player, Hex, Building, GamePhase, Node, Edge, DevCardType } from './core/types.js';
 
 export class CatanEngine {
   public map: Hex[] = [];
@@ -64,15 +64,17 @@ export class CatanEngine {
     }
     const bNodes = Array.from(this.nodes.values()).filter(n => n.hexes.length <= 2);
     const pTypes = ['3:1', ResourceType.WOOD, ResourceType.BRICK, ResourceType.SHEEP, ResourceType.WHEAT, ResourceType.ORE].sort(() => Math.random() - 0.5);
-    for (let i = 0; i < pTypes.length; i++) { if (bNodes[i*2]) this.ports.set(bNodes[i*2].id, pTypes[i] as any); }
+    for (let i = 0; i < pTypes.length; i++) { if (bNodes[i * 2]) this.ports.set(bNodes[i * 2].id, pTypes[i] as any); }
   }
 
   public get currentPlayer() { return this.players[this.currentPlayerIndex]; }
+
   public nextTurn() {
     if (this.phase === GamePhase.SETUP_1) { if (this.currentPlayerIndex < this.players.length - 1) this.currentPlayerIndex++; else this.phase = GamePhase.SETUP_2; }
     else if (this.phase === GamePhase.SETUP_2) { if (this.currentPlayerIndex > 0) this.currentPlayerIndex--; else this.phase = GamePhase.PLAYING; }
     else this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-    this.hasRolled = false; this.setupStep = 'SETTLEMENT';
+    this.hasRolled = false;
+    this.setupStep = 'SETTLEMENT';
   }
 
   public getPlayerResourceCount(pId: string): number {
@@ -87,11 +89,12 @@ export class CatanEngine {
     const harvests: Record<string, Record<string, number>> = {};
     if (total === 7) {
       const toDiscard = this.players.filter(p => this.getPlayerResourceCount(p.id) > 7).map(p => p.id);
-      this.discardedPlayers.clear(); this.phase = toDiscard.length > 0 ? GamePhase.DISCARDING : GamePhase.ROBBER_MOVE;
+      this.discardedPlayers.clear();
+      this.phase = toDiscard.length > 0 ? GamePhase.DISCARDING : GamePhase.ROBBER_MOVE;
       return { total, harvests, isRobber: true, toDiscard };
     }
     this.map.filter(h => h.value === total && !h.hasRobber).forEach(hex => {
-      this.nodes.values().forEach(node => {
+      for (const node of this.nodes.values()) {
         if (node.hexes.some(h => h.id === hex.id)) {
           const b = this.settlements.get(node.id);
           if (b) {
@@ -101,7 +104,7 @@ export class CatanEngine {
             harvests[p.username][hex.resource] = (harvests[p.username][hex.resource] || 0) + qty;
           }
         }
-      });
+      }
     });
     return { total, harvests, isRobber: false, toDiscard: [] };
   }
@@ -118,8 +121,12 @@ export class CatanEngine {
   public moveRobber(hexId: string, pId: string): { success: boolean, victims: string[] } {
     const newHex = this.map.find(h => h.id === hexId);
     if (!newHex || newHex.hasRobber) return { success: false, victims: [] };
-    this.map.forEach(h => h.hasRobber = false); newHex.hasRobber = true;
-    const vIds = Array.from(this.nodes.values()).filter(n => n.hexes.some(h => h.id === hexId)).map(n => this.settlements.get(n.id)?.playerId).filter((id): id is string => !!id && id !== pId && this.getPlayerResourceCount(id) > 0);
+    this.map.forEach(h => h.hasRobber = false);
+    newHex.hasRobber = true;
+    const vIds = Array.from(this.nodes.values())
+      .filter(n => n.hexes.some(h => h.id === hexId))
+      .map(n => this.settlements.get(n.id)?.playerId)
+      .filter((id): id is string => !!id && id !== pId && this.getPlayerResourceCount(id) > 0);
     const victims = Array.from(new Set(vIds));
     this.phase = victims.length > 0 ? GamePhase.ROBBER_STEAL : GamePhase.PLAYING;
     return { success: true, victims };
@@ -131,7 +138,10 @@ export class CatanEngine {
     const pool: ResourceType[] = [];
     Object.entries(v.resources).forEach(([res, count]) => { for (let i = 0; i < count; i++) pool.push(res as ResourceType); });
     const stolen = pool[Math.floor(Math.random() * pool.length)];
-    v.resources[stolen]--; r.resources[stolen]++; this.phase = GamePhase.PLAYING; return stolen;
+    v.resources[stolen]--;
+    r.resources[stolen]++;
+    this.phase = GamePhase.PLAYING;
+    return stolen;
   }
 
   public executeTrade(p1Id: string, p2Id: string, p1G: Partial<Record<ResourceType, number>>, p2G: Partial<Record<ResourceType, number>>): boolean {
@@ -145,24 +155,33 @@ export class CatanEngine {
   }
 
   public tradeWithBank(pId: string, give: ResourceType, receive: ResourceType): boolean {
-    const p = this.players.find(x => x.id === pId); if (!p) return false;
+    const p = this.players.find(x => x.id === pId);
+    if (!p) return false;
     let rate = 4;
     for (const [nId, pT] of this.ports.entries()) { if (this.settlements.get(nId)?.playerId === pId) { if (pT === '3:1') rate = Math.min(rate, 3); else if (pT === give) rate = 2; } }
     if (p.resources[give] < rate) return false;
-    p.resources[give] -= rate; p.resources[receive] += 1; return true;
+    p.resources[give] -= rate;
+    p.resources[receive] += 1;
+    return true;
   }
 
   public buyDevCard(pId: string) {
     const p = this.players.find(x => x.id === pId);
     if (!p || this.devCardDeck.length === 0 || p.resources[ResourceType.ORE] < 1 || p.resources[ResourceType.SHEEP] < 1 || p.resources[ResourceType.WHEAT] < 1) return null;
-    p.resources[ResourceType.ORE]--; p.resources[ResourceType.SHEEP]--; p.resources[ResourceType.WHEAT]--;
-    const card = this.devCardDeck.pop()!; p.devCards.push(card); if (card === DevCardType.VICTORY_POINT) p.victoryPoints++; return card;
+    p.resources[ResourceType.ORE]--;
+    p.resources[ResourceType.SHEEP]--;
+    p.resources[ResourceType.WHEAT]--;
+    const card = this.devCardDeck.pop()!;
+    p.devCards.push(card);
+    if (card === DevCardType.VICTORY_POINT) p.victoryPoints++;
+    return card;
   }
 
   public playDevCard(pId: string, type: DevCardType, data?: any) {
     const p = this.players.find(x => x.id === pId);
     if (!p || !p.devCards.includes(type)) return false;
-    p.devCards.splice(p.devCards.indexOf(type), 1); p.playedDevCards.push(type);
+    p.devCards.splice(p.devCards.indexOf(type), 1);
+    p.playedDevCards.push(type);
     if (type === DevCardType.KNIGHT) { p.knightsPlayed++; this.phase = GamePhase.ROBBER_MOVE; this.updateLargestArmy(); }
     else if (type === DevCardType.MONOPOLY) { const res = data as ResourceType; this.players.forEach(other => { if (other.id !== p.id) { p.resources[res] += other.resources[res]; other.resources[res] = 0; } }); }
     else if (type === DevCardType.YEAR_OF_PLENTY) { p.resources[data.r1 as ResourceType]++; p.resources[data.r2 as ResourceType]++; }
@@ -179,22 +198,30 @@ export class CatanEngine {
     const p = this.players.find(x => x.id === pId)!;
     if (this.phase === GamePhase.PLAYING) { p.resources[ResourceType.WOOD]--; p.resources[ResourceType.BRICK]--; p.resources[ResourceType.SHEEP]--; p.resources[ResourceType.WHEAT]--; }
     else if (this.phase === GamePhase.SETUP_2) { this.nodes.get(nodeId)!.hexes.forEach(h => { if (h.resource !== ResourceType.DESERT) p.resources[h.resource]++; }); }
-    this.settlements.set(nodeId, { playerId: pId, type: BuildingType.SETTLEMENT }); p.victoryPoints++; this.setupStep = 'ROAD'; return true;
+    this.settlements.set(nodeId, { playerId: pId, type: BuildingType.SETTLEMENT });
+    p.victoryPoints++;
+    this.setupStep = 'ROAD';
+    return true;
   }
 
   public buildRoad(pId: string, edgeId: string) {
     if (!this.canBuildRoad(pId, edgeId)) return false;
     const p = this.players.find(x => x.id === pId)!;
     if (this.phase === GamePhase.PLAYING) { p.resources[ResourceType.WOOD]--; p.resources[ResourceType.BRICK]--; }
-    this.roads.set(edgeId, pId); this.updateLongestRoad();
-    if (this.phase.startsWith('SETUP')) this.nextTurn(); return true;
+    this.roads.set(edgeId, pId);
+    this.updateLongestRoad();
+    if (this.phase === GamePhase.SETUP_1 || this.phase === GamePhase.SETUP_2) this.nextTurn();
+    return true;
   }
 
   public buildCity(pId: string, nodeId: string) {
     if (!this.canBuildCity(pId, nodeId)) return false;
     const p = this.players.find(x => x.id === pId)!;
-    p.resources[ResourceType.ORE] -= 3; p.resources[ResourceType.WHEAT] -= 2;
-    this.settlements.set(nodeId, { playerId: pId, type: BuildingType.CITY }); p.victoryPoints++; return true;
+    p.resources[ResourceType.ORE] -= 3;
+    p.resources[ResourceType.WHEAT] -= 2;
+    this.settlements.set(nodeId, { playerId: pId, type: BuildingType.CITY });
+    p.victoryPoints++;
+    return true;
   }
 
   public canBuildSettlement(pId: string, nodeId: string): boolean {
@@ -211,15 +238,27 @@ export class CatanEngine {
   public canBuildRoad(pId: string, edgeId: string): boolean {
     if (this.roads.has(edgeId)) return false;
     const e = this.edges.get(edgeId)!;
-    const connected = (this.settlements.get(e.node1Id)?.playerId === pId || this.settlements.get(e.node2Id)?.playerId === pId || Array.from(this.edges.values()).some(oe => this.roads.get(oe.id) === pId && (oe.node1Id === e.node1Id || oe.node2Id === e.node1Id || oe.node1Id === e.node2Id || oe.node2Id === e.node2Id)));
+    const connected = (
+      this.settlements.get(e.node1Id)?.playerId === pId ||
+      this.settlements.get(e.node2Id)?.playerId === pId ||
+      Array.from(this.edges.values()).some(oe =>
+        this.roads.get(oe.id) === pId &&
+        (oe.node1Id === e.node1Id || oe.node2Id === e.node1Id || oe.node1Id === e.node2Id || oe.node2Id === e.node2Id)
+      )
+    );
     if (!connected) return false;
-    if (this.phase === GamePhase.PLAYING) { const p = this.players.find(x => x.id === pId)!; return p.resources[ResourceType.WOOD] >= 1 && p.resources[ResourceType.BRICK] >= 1; }
+    if (this.phase === GamePhase.PLAYING) {
+      const p = this.players.find(x => x.id === pId)!;
+      return p.resources[ResourceType.WOOD] >= 1 && p.resources[ResourceType.BRICK] >= 1;
+    }
     return true;
   }
 
   public canBuildCity(pId: string, nodeId: string): boolean {
-    const b = this.settlements.get(nodeId); if (!b || b.playerId !== pId || b.type !== BuildingType.SETTLEMENT) return false;
-    const p = this.players.find(x => x.id === pId)!; return p.resources[ResourceType.ORE] >= 3 && p.resources[ResourceType.WHEAT] >= 2;
+    const b = this.settlements.get(nodeId);
+    if (!b || b.playerId !== pId || b.type !== BuildingType.SETTLEMENT) return false;
+    const p = this.players.find(x => x.id === pId)!;
+    return p.resources[ResourceType.ORE] >= 3 && p.resources[ResourceType.WHEAT] >= 2;
   }
 
   private updateLongestRoad() {
@@ -231,15 +270,28 @@ export class CatanEngine {
   private calculatePlayerLongestRoad(pId: string): number {
     const pRoads = Array.from(this.edges.values()).filter(e => this.roads.get(e.id) === pId);
     let maxLen = 0;
-    pRoads.forEach(startEdge => { maxLen = Math.max(maxLen, this.dfsRoad(startEdge, pId, new Set([startEdge.id]), startEdge.node1Id), this.dfsRoad(startEdge, pId, new Set([startEdge.id]), startEdge.node2Id)); });
+    pRoads.forEach(startEdge => {
+      maxLen = Math.max(
+        maxLen,
+        this.dfsRoad(startEdge, pId, new Set([startEdge.id]), startEdge.node1Id),
+        this.dfsRoad(startEdge, pId, new Set([startEdge.id]), startEdge.node2Id)
+      );
+    });
     return maxLen;
   }
 
   private dfsRoad(cE: Edge, pId: string, visited: Set<string>, cNId: string): number {
     const nNId = cE.node1Id === cNId ? cE.node2Id : cE.node1Id;
-    const occupant = this.settlements.get(nNId); if (occupant && occupant.playerId !== pId) return visited.size;
+    const occupant = this.settlements.get(nNId);
+    if (occupant && occupant.playerId !== pId) return visited.size;
     let max = visited.size;
-    this.edges.values().forEach(nE => { if (!visited.has(nE.id) && this.roads.get(nE.id) === pId && (nE.node1Id === nNId || nE.node2Id === nNId)) { visited.add(nE.id); max = Math.max(max, this.dfsRoad(nE, pId, visited, nNId)); visited.delete(nE.id); } });
+    for (const nE of this.edges.values()) {
+      if (!visited.has(nE.id) && this.roads.get(nE.id) === pId && (nE.node1Id === nNId || nE.node2Id === nNId)) {
+        visited.add(nE.id);
+        max = Math.max(max, this.dfsRoad(nE, pId, visited, nNId));
+        visited.delete(nE.id);
+      }
+    }
     return max;
   }
 

@@ -1,7 +1,15 @@
 import { REST, Routes, SlashCommandBuilder } from "discord.js";
-import 'dotenv/config'
+import 'dotenv/config';
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN!);
+
+const commandsData = [
+  new SlashCommandBuilder().setName('start').setDescription('Ouvrir un lobby'),
+  new SlashCommandBuilder().setName('join').setDescription('Rejoindre le lobby'),
+  new SlashCommandBuilder().setName('begin').setDescription('Lancer la partie'),
+  new SlashCommandBuilder().setName('cards').setDescription('Voir tes ressources'),
+  new SlashCommandBuilder().setName('rules').setDescription('Affiche les règles du jeu'),
+].map(cmd => cmd.toJSON());
 
 type DeployCommandsProps = {
   guildId: string;
@@ -9,51 +17,11 @@ type DeployCommandsProps = {
 
 export async function deployCommands({ guildId }: DeployCommandsProps) {
   try {
-    console.log("Started refreshing application (/) commands.");
-
     await rest.put(
       Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID!, guildId),
-      {
-        body: commandsData,
-      }
+      { body: commandsData }
     );
-
-    console.log("Successfully reloaded application (/) commands.");
   } catch (error) {
     console.error(error);
   }
 }
-const JoinCommand = new SlashCommandBuilder()
-                .setName('join')
-                .setDescription('Joins an existing game')
-
-const StartCommand = new SlashCommandBuilder()
-                .setName('start')
-                .setDescription('Start new game')
-
-const rulesCommand = new SlashCommandBuilder()
-                .setName('rules')
-                .setDescription('Game rules')
-
-
-
-const BuildCommand = new SlashCommandBuilder()
-  .setName('build')
-  .setDescription('Build something')
-  .addStringOption(opt =>
-    opt.setName('type')
-      .setDescription('What do you want to build ?')
-      .setRequired(true)
-      .addChoices(
-        { name: 'CITY', value: 'CITY' },
-        { name: 'ROAD', value: 'ROAD' },
-        { name: 'SETTLEMENT', value: 'SETTLEMENT' }
-      )
-  )
-      .addStringOption(opt =>opt.setName('coords')
-      .setDescription('Coordinates')
-      .setRequired(true)
-          );
-          
-
-const commandsData = [JoinCommand, StartCommand, BuildCommand, rulesCommand].map(cmd => cmd.toJSON());
